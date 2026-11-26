@@ -46,7 +46,7 @@
   <!-- ==================== TOP NAVIGATION HEADER ==================== -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-wrap items-center justify-between gap-3 py-3.5">
+      <div class="flex items-center justify-between gap-2 sm:gap-3 py-3">
         <!-- Brand & Project Title -->
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-sm shrink-0">
@@ -59,7 +59,7 @@
               Dakhina City F-384
             </h1>
             <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-500 mt-0.5">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+              <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
                 Tracked from #20
               </span>
               <span id="dataSourceBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
@@ -76,17 +76,21 @@
               <span id="modeBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-medium">
                 Public Read-Only
               </span>
+              <span id="syncStatusPill" class="hidden items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold">
+                <span id="syncStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                <span id="syncStatusText"></span>
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Right Header Controls -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar min-w-0">
           <!-- Refresh from Cloud D1 Button (Available to Everyone) -->
           <button
             id="headerRefreshBtn"
             onclick="refreshFromCloud()"
-            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer"
+            class="inline-flex shrink-0 items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer"
             title="Pull latest data from Cloudflare D1"
           >
             <svg id="headerRefreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -99,7 +103,7 @@
           <button
             id="headerManageMembersBtn"
             onclick="switchTab('members')"
-            class="hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
+            class="hidden shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
             title="Edit or Add Members"
           >
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -109,11 +113,21 @@
             <span class="sm:hidden">Members</span>
           </button>
 
+          <!-- Save / Sync Now (Admin Mode only, moved up from the old second bar) -->
+          <button id="initCloudDbBtn" onclick="syncToCloud(true)" class="hidden shrink-0 items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold bg-sky-500 text-white hover:bg-sky-600 transition cursor-pointer">
+            Initialize Cloud DB
+          </button>
+          <button id="syncNowBtn" onclick="syncToCloud(true)" class="hidden shrink-0 items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition cursor-pointer disabled:opacity-50">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <span class="hidden sm:inline">Save / Sync Now</span>
+            <span class="sm:hidden">Sync</span>
+          </button>
+
           <!-- Admin Login / Logout Button -->
           <button
             id="adminAuthBtn"
             onclick="handleAdminAuthClick()"
-            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm cursor-pointer"
+            class="inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm cursor-pointer"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -124,32 +138,6 @@
       </div>
     </div>
 
-    <!-- Sticky Admin Cloud Sync Bar (Visible when logged into Admin Mode) -->
-    <div id="adminSyncBar" class="hidden border-t transition-colors bg-slate-900 text-white border-slate-800">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div class="flex items-center gap-2">
-          <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-          <span id="syncStatusText" class="font-medium text-slate-200">
-            Admin Mode active &bull; Auto-syncs to Cloudflare D1 on every change.
-          </span>
-        </div>
-        <div class="flex flex-wrap items-center gap-1.5">
-          <button id="initCloudDbBtn" onclick="syncToCloud(true)" class="hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 transition cursor-pointer">
-            Initialize Cloud DB
-          </button>
-          <button id="syncNowBtn" onclick="syncToCloud(true)" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-            Save / Sync Now
-          </button>
-          <button onclick="switchTab('members')" class="px-2.5 py-1.5 rounded-lg bg-slate-700 text-slate-100 font-semibold hover:bg-slate-600 transition cursor-pointer">
-            Manage Members
-          </button>
-          <button onclick="handleAdminAuthClick()" class="px-2.5 py-1.5 rounded-lg bg-rose-500/20 text-rose-200 border border-rose-400/30 font-semibold hover:bg-rose-500/30 transition cursor-pointer">
-            Logout
-          </button>
-        </div>
-      </div>
-    </div>
   </header>
 
   <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
@@ -219,7 +207,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <form onsubmit="submitAdminLogin(event)" class="p-6 space-y-4">
+      <form onsubmit="submitAdminLogin(event)" class="p-5 sm:p-6 space-y-4">
         <div>
           <label for="adminPinInput" class="block text-sm font-medium text-slate-700 mb-1.5">Enter Admin PIN</label>
           <input
@@ -260,11 +248,11 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <form onsubmit="submitPaymentModal(event)" class="p-6 space-y-4">
+      <form onsubmit="submitPaymentModal(event)" class="p-5 sm:p-6 space-y-4">
         <input type="hidden" id="payMonthId" />
         <input type="hidden" id="payMemberId" />
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="payAmount" class="block text-xs font-semibold text-slate-600 mb-1">Amount (BDT ৳)</label>
             <input id="payAmount" type="number" min="0" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm font-semibold tabular-nums" />
@@ -309,21 +297,21 @@
 
   <!-- 3. Add Next Installment Modal -->
   <div id="addMonthModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90vh] overflow-y-auto">
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <h3 class="text-base font-bold text-slate-900">Add Next Installment</h3>
         <button onclick="closeModal('addMonthModal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <form onsubmit="submitAddMonth(event)" class="p-6 space-y-4">
+      <form onsubmit="submitAddMonth(event)" class="p-5 sm:p-6 space-y-4">
         <div>
           <label for="newInstallmentNo" class="block text-xs font-semibold text-slate-600 mb-1">Installment Number (#)</label>
           <input id="newInstallmentNo" type="number" min="1" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
           <p class="text-[11px] text-slate-400 mt-1">Auto-suggested as next sequential number (e.g., #45). You can override if needed.</p>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="newMonthSelect" class="block text-xs font-semibold text-slate-600 mb-1">Month</label>
             <select id="newMonthSelect" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
@@ -347,7 +335,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="newMonthRate" class="block text-xs font-semibold text-slate-600 mb-1">Per Member (৳)</label>
             <input id="newMonthRate" type="number" min="1" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
@@ -383,13 +371,13 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <form onsubmit="submitMemberModal(event)" class="p-6 space-y-4">
+      <form onsubmit="submitMemberModal(event)" class="p-5 sm:p-6 space-y-4">
         <input type="hidden" id="memberEditId" />
         <div>
           <label for="memberNameInput" class="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
           <input id="memberNameInput" type="text" required placeholder="e.g., Md. Rahim Uddin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="memberRoleInput" class="block text-xs font-semibold text-slate-600 mb-1">Role</label>
             <select id="memberRoleInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
@@ -423,13 +411,13 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <form onsubmit="submitDownPayment(event)" class="p-6 space-y-4">
+      <form onsubmit="submitDownPayment(event)" class="p-5 sm:p-6 space-y-4">
         <input type="hidden" id="dpEditId" />
         <div>
           <label for="dpMember" class="block text-xs font-semibold text-slate-600 mb-1">Member</label>
           <select id="dpMember" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"></select>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="dpAmount" class="block text-xs font-semibold text-slate-600 mb-1">Amount (BDT ৳)</label>
             <input id="dpAmount" type="number" min="1" required placeholder="50000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
@@ -469,9 +457,9 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <form onsubmit="submitExpense(event)" class="p-6 space-y-4">
+      <form onsubmit="submitExpense(event)" class="p-5 sm:p-6 space-y-4">
         <input type="hidden" id="expEditId" />
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label for="expDate" class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
             <input id="expDate" type="date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
@@ -1747,7 +1735,7 @@
       const authBtn = document.getElementById('adminAuthBtn');
       const authText = document.getElementById('adminAuthText');
       const manageBtn = document.getElementById('headerManageMembersBtn');
-      const syncBar = document.getElementById('adminSyncBar');
+      const syncPill = document.getElementById('syncStatusPill');
       const syncDot = document.getElementById('syncStatusDot');
       const syncText = document.getElementById('syncStatusText');
       const initCloudDbBtn = document.getElementById('initCloudDbBtn');
@@ -1756,47 +1744,50 @@
       if (appState.isAdmin) {
         modeBadge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold';
         modeBadge.textContent = 'Admin Mode';
-        authBtn.className = 'inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer';
+        authBtn.className = 'inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer';
         authText.textContent = 'Logout';
         manageBtn.classList.remove('hidden');
-        syncBar.classList.remove('hidden');
-
+        syncNowBtn.classList.remove('hidden');
+        syncNowBtn.classList.add('inline-flex');
         initCloudDbBtn.classList.toggle('hidden', appState.cloudMode !== 'empty');
+        initCloudDbBtn.classList.toggle('inline-flex', appState.cloudMode === 'empty');
         syncNowBtn.disabled = appState.isSyncing;
+        syncPill.classList.remove('hidden');
+        syncPill.classList.add('inline-flex');
 
         if (appState.isSyncing) {
-          syncBar.className = 'border-t transition-colors bg-slate-900 text-white border-slate-800';
-          syncDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0';
-          syncText.className = 'font-medium text-amber-200';
-          syncText.textContent = 'Syncing changes to Cloudflare D1...';
+          syncPill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200';
+          syncDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0';
+          syncText.textContent = 'Syncing...';
         } else if (appState.lastSyncError) {
-          syncBar.className = 'border-t transition-colors bg-rose-50 text-rose-950 border-rose-200';
-          syncDot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
-          syncText.className = 'font-medium text-rose-900';
-          syncText.innerHTML = `Cloud sync failed (${escapeHtml(appState.lastSyncError)}) &bull; Click <strong>Save / Sync Now</strong> to retry.`;
+          syncPill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+          syncDot.className = 'w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0';
+          syncText.innerHTML = `Sync failed &bull; Tap Sync to retry.`;
         } else if (appState.cloudMode === 'empty') {
-          syncBar.className = 'border-t transition-colors bg-sky-50 text-sky-950 border-sky-200';
-          syncDot.className = 'w-2 h-2 rounded-full bg-sky-500 animate-pulse shrink-0';
-          syncText.className = 'font-medium text-sky-900';
-          syncText.innerHTML = 'Cloudflare D1 is empty! Click <strong>Initialize Cloud DB</strong> to upload the #20–#44 dataset.';
+          syncPill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200';
+          syncDot.className = 'w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse shrink-0';
+          syncText.innerHTML = 'D1 empty! Tap <strong>Initialize Cloud DB</strong>.';
         } else if (appState.cloudMode === 'local') {
-          syncBar.className = 'border-t transition-colors bg-amber-50 text-amber-950 border-amber-200';
-          syncDot.className = 'w-2 h-2 rounded-full bg-amber-500 shrink-0';
-          syncText.className = 'font-medium text-amber-900';
-          syncText.innerHTML = 'Local Preview Mode &bull; Saving to browser storage. Deploy to Cloudflare Pages for live D1 sync.';
+          syncPill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200';
+          syncDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0';
+          syncText.textContent = 'Local Preview - saving to browser only.';
         } else {
-          syncBar.className = 'border-t transition-colors bg-slate-900 text-white border-slate-800';
-          syncDot.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
-          syncText.className = 'font-medium text-slate-200';
-          syncText.innerHTML = 'Connected to <strong>Cloudflare D1</strong> &bull; Every edit auto-saves live for all members.';
+          syncPill.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+          syncDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0';
+          syncText.textContent = 'D1 Live - every edit auto-saves.';
         }
       } else {
         modeBadge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-medium';
         modeBadge.textContent = 'Public Read-Only';
-        authBtn.className = 'inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm cursor-pointer';
+        authBtn.className = 'inline-flex shrink-0 items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm cursor-pointer';
         authText.textContent = 'Admin Login';
         manageBtn.classList.add('hidden');
-        syncBar.classList.add('hidden');
+        syncNowBtn.classList.add('hidden');
+        syncNowBtn.classList.remove('inline-flex');
+        initCloudDbBtn.classList.add('hidden');
+        initCloudDbBtn.classList.remove('inline-flex');
+        syncPill.classList.add('hidden');
+        syncPill.classList.remove('inline-flex');
       }
     }
 
@@ -2118,7 +2109,7 @@
 
             <!-- Member Payment Table -->
             <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+              <table class="w-full min-w-[620px] text-left border-collapse">
                 <thead>
                   <tr class="bg-slate-50/70 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <th class="px-4 py-3">Member</th>
@@ -2154,7 +2145,7 @@
               </span>
             </summary>
             <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
-              <table class="w-full text-left border-collapse">
+              <table class="w-full min-w-[680px] text-left border-collapse">
                 <thead class="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
                   <tr class="text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <th class="px-4 py-3">Inst #</th>
@@ -2220,7 +2211,7 @@
             ` : ''}
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full min-w-[560px] text-left border-collapse">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th class="px-4 py-3">Member</th>
@@ -2333,7 +2324,7 @@
           </div>
 
           <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full min-w-[680px] text-left border-collapse">
               <thead class="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
                 <tr class="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th class="px-4 py-3">Date</th>
