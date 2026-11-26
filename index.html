@@ -978,6 +978,44 @@
       appState.cloudMode = detectedCloudMode;
       appState.dataSource = sourceLabel;
       appState.lastSyncError = null;
+
+      // Restore the Admin session saved in this tab (login survives a page
+      // reload). The PIN is re-verified with the server, so if ADMIN_PIN was
+      // changed in Cloudflare after login, the old session is dropped and
+      // the user must log in again with the new PIN.
+      try {
+        const savedPin = sessionStorage.getItem(SESSION_PIN_KEY);
+        if (savedPin) {
+          if (detectedCloudMode === 'live' || detectedCloudMode === 'empty') {
+            try {
+              const verifyRes = await fetch('/api/data?verify=1', {
+                method: 'GET',
+                headers: { 'X-Admin-Pin': savedPin },
+                cache: 'no-store'
+              });
+              if (verifyRes.ok) {
+                const verifyData = await verifyRes.json().catch(() => ({}));
+                if (verifyData.valid === true) {
+                  appState.isAdmin = true;
+                  appState.sessionPin = savedPin;
+                } else {
+                  sessionStorage.removeItem(SESSION_PIN_KEY);
+                }
+              } else if (verifyRes.status === 401) {
+                sessionStorage.removeItem(SESSION_PIN_KEY);
+              }
+            } catch (e) { /* network error: keep the stored PIN for the next load */ }
+          } else {
+            const correctPin = String((appState.db.settings && appState.db.settings.adminPin) || '1234');
+            if (savedPin === correctPin) {
+              appState.isAdmin = true;
+              appState.sessionPin = savedPin;
+            } else {
+              sessionStorage.removeItem(SESSION_PIN_KEY);
+            }
+          }
+        }
+      } catch (e) { /* sessionStorage unavailable: stay logged out */ }
       if (detectedCloudMode === 'live') {
         appState.hasUnsavedChanges = false;
       }
