@@ -1,0 +1,11 @@
+name = "dakhina-city"
+compatibility_date = "2026-11-26"
+pages_build_output_dir = "."
+
+# D1 database binding used by functions/api/data.js as env.DB
+# database_id is filled in after `wrangler d1 create dakhina-city-db`
+# (or after creating the DB in the Cloudflare dashboard).
+[[d1_databases]]
+binding = "DB"
+database_name = "dakhina-city-db"
+database_id = "d4f64705-0cf0-4660-8966-aa6e31e763e4"

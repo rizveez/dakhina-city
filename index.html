@@ -1,0 +1,2622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dakhina City — Payment &amp; Expense Tracker</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ==================== TOP NAVIGATION HEADER ==================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-wrap items-center justify-between gap-3 py-3.5">
+        <!-- Brand & Project Title -->
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-sm shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h1 id="headerProjectTitle" class="text-base sm:text-lg font-bold text-slate-900 truncate">
+              Dakhina City F-384
+            </h1>
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-slate-500 mt-0.5">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                Tracked from #20
+              </span>
+              <span id="dataSourceBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                Connecting...
+              </span>
+              <span id="syncSpinnerBadge" class="hidden inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold">
+                <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Syncing...
+              </span>
+              <span id="modeBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-medium">
+                Public Read-Only
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Header Controls -->
+        <div class="flex items-center gap-2">
+          <!-- Refresh from Cloud D1 Button (Available to Everyone) -->
+          <button
+            id="headerRefreshBtn"
+            onclick="refreshFromCloud()"
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer"
+            title="Pull latest data from Cloudflare D1"
+          >
+            <svg id="headerRefreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+
+          <!-- Quick Manage Members Shortcut (Visible in Admin Mode) -->
+          <button
+            id="headerManageMembersBtn"
+            onclick="switchTab('members')"
+            class="hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
+            title="Edit or Add Members"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span class="hidden sm:inline">Manage Members</span>
+            <span class="sm:hidden">Members</span>
+          </button>
+
+          <!-- Admin Login / Logout Button -->
+          <button
+            id="adminAuthBtn"
+            onclick="handleAdminAuthClick()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span id="adminAuthText">Admin Login</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sticky Admin Cloud Sync Bar (Visible when logged into Admin Mode) -->
+    <div id="adminSyncBar" class="hidden border-t transition-colors bg-slate-900 text-white border-slate-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2">
+          <span id="syncStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span id="syncStatusText" class="font-medium text-slate-200">
+            Admin Mode active &bull; Auto-syncs to Cloudflare D1 on every change.
+          </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button id="initCloudDbBtn" onclick="syncToCloud(true)" class="hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 transition cursor-pointer">
+            Initialize Cloud DB
+          </button>
+          <button id="syncNowBtn" onclick="syncToCloud(true)" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            Save / Sync Now
+          </button>
+          <button onclick="switchTab('members')" class="px-2.5 py-1.5 rounded-lg bg-slate-700 text-slate-100 font-semibold hover:bg-slate-600 transition cursor-pointer">
+            Manage Members
+          </button>
+          <button onclick="handleAdminAuthClick()" class="px-2.5 py-1.5 rounded-lg bg-rose-500/20 text-rose-200 border border-rose-400/30 font-semibold hover:bg-rose-500/30 transition cursor-pointer">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+
+    <!-- ==================== KPI SUMMARY CARDS ==================== -->
+    <section id="kpiGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Populated dynamically by renderKPIs() -->
+    </section>
+
+    <!-- ==================== TAB NAVIGATION ==================== -->
+    <nav class="bg-white rounded-2xl border border-slate-200 p-1.5 shadow-sm overflow-x-auto no-scrollbar">
+      <div class="flex items-center gap-1 min-w-max" role="tablist">
+        <button onclick="switchTab('monthly')" data-tab="monthly" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Monthly Installments
+        </button>
+
+        <button onclick="switchTab('downpayments')" data-tab="downpayments" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          Down Payment
+        </button>
+
+        <button onclick="switchTab('expenditure')" data-tab="expenditure" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+          </svg>
+          Expenditure &amp; ৳43 Fund
+        </button>
+
+        <button onclick="switchTab('members')" data-tab="members" class="tab-btn px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Members &amp; Cloud Sync
+        </button>
+      </div>
+    </nav>
+
+    <!-- ==================== TAB PANELS ==================== -->
+    <div id="tabContent" class="space-y-6">
+      <!-- Dynamically rendered based on active tab -->
+    </div>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="border-t border-slate-200 bg-white mt-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+      <p>Landshare Transparent Ledger &bull; Cloudflare Pages + D1 Live Database</p>
+      <p id="footerLastUpdated">Last updated: —</p>
+    </div>
+  </footer>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 1. Admin Login Modal -->
+  <div id="adminLoginModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">Admin Access</h3>
+        <button onclick="closeModal('adminLoginModal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form onsubmit="submitAdminLogin(event)" class="p-6 space-y-4">
+        <div>
+          <label for="adminPinInput" class="block text-sm font-medium text-slate-700 mb-1.5">Enter Admin PIN</label>
+          <input
+            id="adminPinInput"
+            type="password"
+            inputmode="numeric"
+            autocomplete="off"
+            required
+            placeholder="••••"
+            class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-center text-lg tracking-widest font-semibold"
+          />
+          <p id="pinHintText" class="mt-2 text-xs text-slate-500 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+            In Cloudflare mode, enter your <strong class="text-slate-800">ADMIN_PIN</strong>. In Local Preview mode, default PIN is <strong class="text-slate-800">1234</strong>.
+          </p>
+          <p id="pinErrorText" class="hidden mt-2 text-xs font-medium text-rose-600"></p>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('adminLoginModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" id="adminLoginSubmitBtn" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer disabled:opacity-60">
+            Unlock Admin
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Mark Paid / Edit Monthly Payment Modal -->
+  <div id="paymentModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 id="paymentModalTitle" class="text-base font-bold text-slate-900">Record Monthly Payment</h3>
+          <p id="paymentModalSubtitle" class="text-xs text-slate-500 mt-0.5"></p>
+        </div>
+        <button onclick="closeModal('paymentModal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form onsubmit="submitPaymentModal(event)" class="p-6 space-y-4">
+        <input type="hidden" id="payMonthId" />
+        <input type="hidden" id="payMemberId" />
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="payAmount" class="block text-xs font-semibold text-slate-600 mb-1">Amount (BDT ৳)</label>
+            <input id="payAmount" type="number" min="0" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm font-semibold tabular-nums" />
+          </div>
+          <div>
+            <label for="payDate" class="block text-xs font-semibold text-slate-600 mb-1">Payment Date</label>
+            <input id="payDate" type="date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm" />
+          </div>
+        </div>
+
+        <div>
+          <label for="payMethod" class="block text-xs font-semibold text-slate-600 mb-1">Payment Method</label>
+          <select id="payMethod" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm bg-white">
+            <option value="Cash">Cash (Hand to Admin)</option>
+            <option value="bKash">bKash</option>
+            <option value="Nagad">Nagad</option>
+            <option value="Bank">Bank Transfer</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="payNote" class="block text-xs font-semibold text-slate-600 mb-1">Note / Reference (Optional)</label>
+          <input id="payNote" type="text" placeholder="e.g., TrxID or received in person" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-sm" />
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+          <button type="button" id="markUnpaidBtn" onclick="markMemberUnpaid()" class="hidden px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 cursor-pointer">
+            Mark as Pending
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" onclick="closeModal('paymentModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer">
+              Save as Paid
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Add Next Installment Modal -->
+  <div id="addMonthModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">Add Next Installment</h3>
+        <button onclick="closeModal('addMonthModal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form onsubmit="submitAddMonth(event)" class="p-6 space-y-4">
+        <div>
+          <label for="newInstallmentNo" class="block text-xs font-semibold text-slate-600 mb-1">Installment Number (#)</label>
+          <input id="newInstallmentNo" type="number" min="1" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          <p class="text-[11px] text-slate-400 mt-1">Auto-suggested as next sequential number (e.g., #45). You can override if needed.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="newMonthSelect" class="block text-xs font-semibold text-slate-600 mb-1">Month</label>
+            <select id="newMonthSelect" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div>
+            <label for="newYearInput" class="block text-xs font-semibold text-slate-600 mb-1">Year</label>
+            <input id="newYearInput" type="number" min="2020" max="2050" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="newMonthRate" class="block text-xs font-semibold text-slate-600 mb-1">Per Member (৳)</label>
+            <input id="newMonthRate" type="number" min="1" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+          <div>
+            <label for="newMonthOffice" class="block text-xs font-semibold text-slate-600 mb-1">Office Deposit (৳)</label>
+            <input id="newMonthOffice" type="number" min="0" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-500 bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+          When all members are marked Paid for this installment, the surplus (e.g., <strong>৳20,400 − ৳20,357 = +৳43</strong>) will automatically credit to the Expenditure &amp; ৳43 Fund.
+        </p>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('addMonthModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer">
+            Create Installment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Add / Edit Member Modal -->
+  <div id="memberModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="memberModalTitle" class="text-base font-bold text-slate-900">Add Member</h3>
+        <button onclick="closeModal('memberModal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form onsubmit="submitMemberModal(event)" class="p-6 space-y-4">
+        <input type="hidden" id="memberEditId" />
+        <div>
+          <label for="memberNameInput" class="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
+          <input id="memberNameInput" type="text" required placeholder="e.g., Md. Rahim Uddin" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="memberRoleInput" class="block text-xs font-semibold text-slate-600 mb-1">Role</label>
+            <select id="memberRoleInput" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+              <option value="Member">Member</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label for="memberPhoneInput" class="block text-xs font-semibold text-slate-600 mb-1">Phone Number</label>
+            <input id="memberPhoneInput" type="text" placeholder="017XX-XXXXXX" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+        </div>
+        <div>
+          <label for="memberNoteInput" class="block text-xs font-semibold text-slate-600 mb-1">Note / Share Info (Optional)</label>
+          <input id="memberNoteInput" type="text" placeholder="e.g., 1 Share / Project Coordinator" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('memberModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer">Save Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Add / Edit Down Payment Modal -->
+  <div id="downPaymentModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="dpModalTitle" class="text-base font-bold text-slate-900">Record Down Payment</h3>
+        <button onclick="closeModal('downPaymentModal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form onsubmit="submitDownPayment(event)" class="p-6 space-y-4">
+        <input type="hidden" id="dpEditId" />
+        <div>
+          <label for="dpMember" class="block text-xs font-semibold text-slate-600 mb-1">Member</label>
+          <select id="dpMember" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="dpAmount" class="block text-xs font-semibold text-slate-600 mb-1">Amount (BDT ৳)</label>
+            <input id="dpAmount" type="number" min="1" required placeholder="50000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+          <div>
+            <label for="dpDate" class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+            <input id="dpDate" type="date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+        </div>
+        <div>
+          <label for="dpMethod" class="block text-xs font-semibold text-slate-600 mb-1">Method</label>
+          <select id="dpMethod" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+            <option value="Bank">Bank Transfer / Cheque</option>
+            <option value="Cash">Cash</option>
+            <option value="bKash">bKash</option>
+            <option value="Nagad">Nagad</option>
+          </select>
+        </div>
+        <div>
+          <label for="dpNote" class="block text-xs font-semibold text-slate-600 mb-1">Note</label>
+          <input id="dpNote" type="text" placeholder="e.g., Initial landshare booking payment" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('downPaymentModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm cursor-pointer">Save Down Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. Add / Edit Maintenance Expense Modal -->
+  <div id="expenseModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 id="expenseModalTitle" class="text-base font-bold text-slate-900">Add Maintenance Expense</h3>
+        <button onclick="closeModal('expenseModal')" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form onsubmit="submitExpense(event)" class="p-6 space-y-4">
+        <input type="hidden" id="expEditId" />
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="expDate" class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+            <input id="expDate" type="date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+          <div>
+            <label for="expAmount" class="block text-xs font-semibold text-slate-600 mb-1">Amount (BDT ৳)</label>
+            <input id="expAmount" type="number" min="1" required placeholder="50" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+          </div>
+        </div>
+        <div>
+          <label for="expCategory" class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+          <select id="expCategory" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none">
+            <option value="Khata / Kolom">Khata / Kolom (Stationery)</option>
+            <option value="File / Printing">File / Photocopy / Printing</option>
+            <option value="Conveyance">Conveyance / Transport</option>
+            <option value="Bank / bKash Fee">Bank / bKash Charge</option>
+            <option value="Other">Other Maintenance</option>
+          </select>
+        </div>
+        <div>
+          <label for="expItem" class="block text-xs font-semibold text-slate-600 mb-1">Item / Description</label>
+          <input id="expItem" type="text" required placeholder="e.g., Ledger Khata, 2 Ballpens, Clear File" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+        </div>
+        <div>
+          <label for="expNote" class="block text-xs font-semibold text-slate-600 mb-1">Note (Optional)</label>
+          <input id="expNote" type="text" placeholder="Receipt details or extra remarks" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal('expenseModal')" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-sm cursor-pointer">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. Custom Confirmation Modal (Replaces browser confirm()) -->
+  <div id="confirmModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-sm p-6 space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div>
+          <h3 id="confirmTitle" class="text-base font-bold text-slate-900">Confirm Action</h3>
+          <p id="confirmMessage" class="text-sm text-slate-600 mt-1"></p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('confirmModal')" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer">
+          Cancel
+        </button>
+        <button type="button" id="confirmProceedBtn" class="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-sm cursor-pointer">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-[calc(100%-2.5rem)] pointer-events-none"></div>
+
+  <!-- ==================== APPLICATION JAVASCRIPT ==================== -->
+  <script>
+    /* =========================================================================
+       1. CONSTANTS & DEFAULT SAMPLE DATABASE (#20–#43 Completed, #44 Upcoming)
+       ========================================================================= */
+    const LOCAL_STORAGE_KEY = 'landshare_tracker_db_v3';
+    const TRACKING_START_INSTALLMENT = 20;
+    const MONTH_NAMES = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const SHORT_MONTH_NAMES = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    /**
+     * Generates the pre-populated seed database:
+     * - Installments #20 (Dec 2024) through #43 (Nov 2026) — 24 installments:
+     *   All 6 members Paid, ৳20,400 collected, ৳20,357 office deposit,
+     *   auto-crediting 24 × ৳43 = ৳1,032 to the Expenditure Fund.
+     * - Installment #44 (Dec 2026): Active upcoming installment (0/6 Paid, Pending),
+     *   selected by default so Admin can record December payments immediately.
+     */
+    function getSampleDatabase() {
+      const members = [
+        { id: 'm1', name: 'Member 1', role: 'Admin', phone: '01711-000001', note: 'Project Coordinator' },
+        { id: 'm2', name: 'Member 2', role: 'Member', phone: '01711-000002', note: 'Shareholder' },
+        { id: 'm3', name: 'Member 3', role: 'Member', phone: '01711-000003', note: 'Shareholder' },
+        { id: 'm4', name: 'Member 4', role: 'Member', phone: '01711-000004', note: 'Shareholder' },
+        { id: 'm5', name: 'Member 5', role: 'Member', phone: '01711-000005', note: 'Shareholder' },
+        { id: 'm6', name: 'Member 6', role: 'Member', phone: '01711-000006', note: 'Shareholder' }
+      ];
+
+      const methods = ['Cash', 'bKash', 'Cash', 'Bank', 'bKash', 'Nagad'];
+      const months = [];
+
+      // Start at Installment #20 = December 2024
+      let year = 2024;
+      let monthIdx = 11; // 0-based (11 = December)
+
+      for (let instNo = 20; instNo <= 44; instNo++) {
+        const mNum = String(monthIdx + 1).padStart(2, '0');
+        const id = `${year}-${mNum}`;
+        const label = `${MONTH_NAMES[monthIdx]} ${year}`;
+        const payments = {};
+
+        // #20 through #43 (Nov 2026) are all COMPLETED (all 6 members paid)
+        if (instNo <= 43) {
+          members.forEach((member, idx) => {
+            const day = String(3 + idx * 2).padStart(2, '0'); // 03, 05, 07, 09, 11, 13
+            payments[member.id] = {
+              paid: true,
+              amount: 3400,
+              date: `${year}-${mNum}-${day}`,
+              method: methods[idx],
+              note: idx === 0 ? 'Self deposit' : 'Received on time'
+            };
+          });
+        }
+        // #44 (Dec 2026) stays empty (0/6 Paid, Pending) for upcoming collection
+
+        months.push({
+          id,
+          installmentNo: instNo,
+          label,
+          monthlyRate: 3400,
+          officeDeposit: 20357,
+          payments
+        });
+
+        monthIdx += 1;
+        if (monthIdx > 11) {
+          monthIdx = 0;
+          year += 1;
+        }
+      }
+
+      return {
+        projectTitle: 'Dakhina City F-384',
+        settings: {
+          monthlyRate: 3400,
+          officeDeposit: 20357,
+          trackingStartInstallment: TRACKING_START_INSTALLMENT,
+          adminPin: '1234'
+        },
+        members,
+        downPayments: [
+          { id: 'dp1', memberId: 'm1', amount: 50000, date: '2023-04-10', method: 'Bank', note: 'Initial landshare booking down payment' },
+          { id: 'dp2', memberId: 'm2', amount: 50000, date: '2023-04-10', method: 'Bank', note: 'Initial landshare booking down payment' },
+          { id: 'dp3', memberId: 'm3', amount: 50000, date: '2023-04-11', method: 'Cash', note: 'Initial landshare booking down payment' },
+          { id: 'dp4', memberId: 'm4', amount: 50000, date: '2023-04-12', method: 'Bank', note: 'Initial landshare booking down payment' },
+          { id: 'dp5', memberId: 'm5', amount: 50000, date: '2023-04-12', method: 'Bank', note: 'Initial landshare booking down payment' },
+          { id: 'dp6', memberId: 'm6', amount: 50000, date: '2023-04-14', method: 'Cash', note: 'Initial landshare booking down payment' }
+        ],
+        months,
+        expenses: [
+          {
+            id: 'exp1',
+            date: '2024-12-18',
+            category: 'Khata / Kolom',
+            item: 'Hisab Khata (Register Book) & 3 Ballpoint Pens',
+            amount: 85,
+            note: 'Purchased when starting account tracking from Installment #20'
+          },
+          {
+            id: 'exp2',
+            date: '2025-07-15',
+            category: 'File / Printing',
+            item: 'Plastic Clear File & Office Receipt Photocopies',
+            amount: 65,
+            note: 'Archiving bank & office deposit slips'
+          },
+          {
+            id: 'exp3',
+            date: '2026-04-20',
+            category: 'Khata / Kolom',
+            item: 'Hardcover Document File & Marker Pen',
+            amount: 120,
+            note: 'Annual document organization'
+          }
+        ],
+        lastUpdated: new Date().toISOString()
+      };
+    }
+
+    /* =========================================================================
+       2. APPLICATION STATE
+       ========================================================================= */
+    const SESSION_PIN_KEY = 'landshare_admin_pin_session';
+
+    const appState = {
+      db: null,
+      isAdmin: false,
+      sessionPin: '',
+      activeTab: 'monthly',
+      selectedMonthId: null,
+      expenseFilter: 'all', // 'all' | 'credit' | 'expense'
+      cloudMode: 'local',   // 'live' | 'empty' | 'local'
+      dataSource: 'Connecting...',
+      isSyncing: false,
+      hasUnsavedChanges: false,
+      lastSyncError: null,
+      confirmCallback: null
+    };
+
+    /* =========================================================================
+       3. UTILITY HELPERS (Formatting, Escaping, Dates, Toasts)
+       ========================================================================= */
+
+    function formatBDT(amount) {
+      const num = Number(amount) || 0;
+      const sign = num < 0 ? '-' : '';
+      return sign + '৳' + Math.abs(num).toLocaleString('en-IN');
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getTodayISO() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatTimestamp(isoStr) {
+      if (!isoStr) return '—';
+      try {
+        const d = new Date(isoStr);
+        return d.toLocaleString('en-GB', {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch {
+        return isoStr;
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const styles = {
+        success: 'bg-slate-900 text-white border-emerald-500',
+        error: 'bg-rose-700 text-white border-rose-400',
+        info: 'bg-sky-700 text-white border-sky-400'
+      };
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border-l-4 text-sm font-medium transition-all duration-300 translate-y-2 opacity-0 ${styles[type] || styles.success}`;
+      toast.innerHTML = `<span class="flex-1">${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    /* =========================================================================
+       4. FINANCIAL LOGIC: analyzeMonth & computeProjectMetrics
+       ========================================================================= */
+
+    /**
+     * Analyzes a single installment month against the current member list.
+     * Automatically credits surplus (Collected - Office Deposit, e.g. +৳43)
+     * once all members are marked Paid.
+     */
+    function analyzeMonth(month) {
+      const members = (appState.db && appState.db.members) || [];
+      const totalMembers = members.length;
+      const rate = Number(month.monthlyRate ?? appState.db?.settings?.monthlyRate ?? 3400);
+      const officeDeposit = Number(month.officeDeposit ?? appState.db?.settings?.officeDeposit ?? 20357);
+      const payments = month.payments || {};
+
+      let paidCount = 0;
+      let collectedTotal = 0;
+      let latestDate = '';
+
+      members.forEach((member) => {
+        const rec = payments[member.id];
+        if (rec && rec.paid) {
+          paidCount += 1;
+          collectedTotal += Number(rec.amount) || 0;
+          if (rec.date && rec.date > latestDate) {
+            latestDate = rec.date;
+          }
+        }
+      });
+
+      const expectedTotal = rate * totalMembers;
+      const isCompleted = totalMembers > 0 && paidCount === totalMembers;
+      const potentialSurplus = Math.max(0, expectedTotal - officeDeposit);
+      const creditedSurplus = isCompleted ? Math.max(0, collectedTotal - officeDeposit) : 0;
+
+      return {
+        installmentNo: month.installmentNo,
+        rate,
+        officeDeposit,
+        totalMembers,
+        paidCount,
+        collectedTotal,
+        expectedTotal,
+        isCompleted,
+        potentialSurplus,
+        creditedSurplus,
+        completionDate: latestDate || `${month.id}-28`
+      };
+    }
+
+    /**
+     * Computes all project-wide KPIs, totals, and the combined ৳43 Fund ledger
+     * (auto-credited surpluses + manual maintenance expenses).
+     */
+    function computeProjectMetrics() {
+      const months = (appState.db && appState.db.months) || [];
+      const downPayments = (appState.db && appState.db.downPayments) || [];
+      const expenses = (appState.db && appState.db.expenses) || [];
+
+      const sortedMonths = [...months].sort(
+        (a, b) => (Number(a.installmentNo) || 0) - (Number(b.installmentNo) || 0)
+      );
+
+      let completedMonthsCount = 0;
+      let totalOfficeDeposited = 0;
+      let totalMonthlyCollected = 0;
+      let totalSurplusCredited = 0;
+      const combinedLedger = [];
+
+      sortedMonths.forEach((m) => {
+        const info = analyzeMonth(m);
+        totalMonthlyCollected += info.collectedTotal;
+
+        if (info.isCompleted) {
+          completedMonthsCount += 1;
+          totalOfficeDeposited += info.officeDeposit;
+          totalSurplusCredited += info.creditedSurplus;
+
+          if (info.creditedSurplus > 0) {
+            combinedLedger.push({
+              id: `credit-${m.id}`,
+              type: 'credit',
+              date: info.completionDate,
+              installmentNo: m.installmentNo,
+              category: '+৳43 Surplus',
+              item: `Auto Surplus Credit — Installment #${m.installmentNo} (${m.label})`,
+              note: `Collected ${formatBDT(info.collectedTotal)} − Office Deposit ${formatBDT(info.officeDeposit)}`,
+              amount: info.creditedSurplus
+            });
+          }
+        }
+      });
+
+      const downPaymentTotal = downPayments.reduce(
+        (sum, dp) => sum + (Number(dp.amount) || 0),
+        0
+      );
+
+      let totalExpensesSpent = 0;
+      expenses.forEach((exp) => {
+        const amt = Number(exp.amount) || 0;
+        totalExpensesSpent += amt;
+        combinedLedger.push({
+          id: exp.id,
+          type: 'expense',
+          date: exp.date || '',
+          category: exp.category || 'Other',
+          item: exp.item || 'Maintenance Expense',
+          note: exp.note || '',
+          amount: amt
+        });
+      });
+
+      // Sort combined ledger newest date first
+      combinedLedger.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+      const minInstNo = sortedMonths.length > 0
+        ? sortedMonths[0].installmentNo
+        : TRACKING_START_INSTALLMENT;
+      const maxInstNo = sortedMonths.length > 0
+        ? sortedMonths[sortedMonths.length - 1].installmentNo
+        : TRACKING_START_INSTALLMENT;
+
+      return {
+        sortedMonths,
+        minInstNo,
+        maxInstNo,
+        totalMonthsCount: sortedMonths.length,
+        completedMonthsCount,
+        totalOfficeDeposited,
+        totalMonthlyCollected,
+        totalSurplusCredited,
+        totalExpensesSpent,
+        maintenanceBalance: totalSurplusCredited - totalExpensesSpent,
+        downPaymentTotal,
+        grandTotalCollected: downPaymentTotal + totalMonthlyCollected,
+        combinedLedger
+      };
+    }
+
+    /* =========================================================================
+       5. DATA LOADING & CLOUDFLARE D1 LIVE SYNC (/api/data -> localStorage -> Seed)
+       ========================================================================= */
+
+    function isValidDatabase(obj) {
+      return obj && typeof obj === 'object' && Array.isArray(obj.members) && Array.isArray(obj.months);
+    }
+
+    function normalizeDatabase(loaded) {
+      loaded.settings = Object.assign({
+        monthlyRate: 3400,
+        officeDeposit: 20357,
+        trackingStartInstallment: TRACKING_START_INSTALLMENT,
+        adminPin: '1234'
+      }, loaded.settings || {});
+      loaded.downPayments = Array.isArray(loaded.downPayments) ? loaded.downPayments : [];
+      loaded.expenses = Array.isArray(loaded.expenses) ? loaded.expenses : [];
+      loaded.members.forEach((m, idx) => {
+        if (!m.role) m.role = idx === 0 ? 'Admin' : 'Member';
+      });
+      loaded.months.forEach((m, i) => {
+        if (m.installmentNo === undefined || m.installmentNo === null) {
+          m.installmentNo = TRACKING_START_INSTALLMENT + i;
+        }
+      });
+      return loaded;
+    }
+
+    async function initializeDatabase(isManualRefresh = false) {
+      let loaded = null;
+      let sourceLabel = '';
+      let detectedCloudMode = 'local';
+
+      const refreshIcon = document.getElementById('headerRefreshIcon');
+      if (refreshIcon && isManualRefresh) refreshIcon.classList.add('animate-spin');
+
+      // 1) Try live Cloudflare Pages Function + D1 endpoint: GET /api/data
+      try {
+        const response = await fetch('/api/data', { cache: 'no-store' });
+        if (response.ok) {
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const json = await response.json();
+            if (json && json.empty === true) {
+              detectedCloudMode = 'empty';
+              sourceLabel = 'D1 Connected (Not Initialized)';
+            } else if (isValidDatabase(json)) {
+              loaded = json;
+              detectedCloudMode = 'live';
+              sourceLabel = 'Cloudflare D1 Live';
+              try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(loaded));
+              } catch (e) { /* ignore quota errors */ }
+            }
+          }
+        }
+      } catch (err) {
+        // Unreachable in local preview / sandbox — fall back cleanly to Local Preview Mode
+        detectedCloudMode = 'local';
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
+
+      // 2) If D1 is empty or unreachable, fall back to localStorage
+      if (!loaded) {
+        const localRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localRaw) {
+          try {
+            const parsed = JSON.parse(localRaw);
+            if (isValidDatabase(parsed)) {
+              loaded = parsed;
+              if (detectedCloudMode === 'local') {
+                sourceLabel = 'Local Preview Mode';
+              }
+            }
+          } catch (err) {
+            console.warn('Ignoring invalid localStorage data.');
+          }
+        }
+      }
+
+      // 3) Fallback to built-in seed data (#20–#43 Completed, #44 Upcoming)
+      if (!loaded) {
+        loaded = getSampleDatabase();
+        if (detectedCloudMode === 'local') {
+          sourceLabel = 'Local Preview Mode';
+        }
+      }
+
+      appState.db = normalizeDatabase(loaded);
+      appState.cloudMode = detectedCloudMode;
+      appState.dataSource = sourceLabel;
+      appState.lastSyncError = null;
+      if (detectedCloudMode === 'live') {
+        appState.hasUnsavedChanges = false;
+      }
+
+      // Keep currently selected month if it still exists, otherwise select latest (#44)
+      const sorted = [...appState.db.months].sort((a, b) => (Number(a.installmentNo) || 0) - (Number(b.installmentNo) || 0));
+      const stillExists = appState.selectedMonthId && appState.db.months.some((m) => m.id === appState.selectedMonthId);
+      if (!stillExists) {
+        appState.selectedMonthId = sorted.length > 0 ? sorted[sorted.length - 1].id : null;
+      }
+
+      renderApp();
+
+      if (isManualRefresh) {
+        if (detectedCloudMode === 'live') {
+          showToast('Refreshed latest data from Cloudflare D1.');
+        } else if (detectedCloudMode === 'empty') {
+          showToast('Cloudflare D1 is connected but not initialized yet.', 'info');
+        } else {
+          showToast('Offline / Local Preview Mode — showing local data.', 'info');
+        }
+      }
+    }
+
+    async function refreshFromCloud() {
+      await initializeDatabase(true);
+    }
+
+    /**
+     * Pushes the current appState.db to Cloudflare D1 via POST /api/data
+     * using the authenticated Admin PIN in X-Admin-Pin header.
+     */
+    async function syncToCloud(showManualFeedback = false) {
+      if (!appState.isAdmin) return false;
+
+      if (appState.cloudMode === 'local') {
+        if (showManualFeedback) {
+          showToast('Local Preview Mode: saved to browser localStorage. Deploy to Cloudflare Pages to sync with D1.', 'info');
+        }
+        return false;
+      }
+
+      const pin = appState.sessionPin || sessionStorage.getItem(SESSION_PIN_KEY) || '';
+      if (!pin) {
+        showToast('Session PIN missing. Please logout and login again.', 'error');
+        return false;
+      }
+
+      appState.isSyncing = true;
+      appState.lastSyncError = null;
+      renderHeader();
+
+      try {
+        const res = await fetch('/api/data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Pin': pin
+          },
+          body: JSON.stringify(appState.db)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          const msg = res.status === 401
+            ? 'Unauthorized: Wrong Admin PIN'
+            : (errData.error || `Sync failed (HTTP ${res.status})`);
+          throw new Error(msg);
+        }
+
+        appState.cloudMode = 'live';
+        appState.dataSource = 'Cloudflare D1 Live';
+        appState.hasUnsavedChanges = false;
+        appState.lastSyncError = null;
+        showToast('Saved to Cloudflare D1');
+        return true;
+      } catch (err) {
+        appState.hasUnsavedChanges = true;
+        appState.lastSyncError = err.message || 'Network error';
+        showToast(`Sync failed — Retry (${appState.lastSyncError})`, 'error');
+        return false;
+      } finally {
+        appState.isSyncing = false;
+        renderApp();
+      }
+    }
+
+    function persistChanges(markUnsaved = true) {
+      appState.db.lastUpdated = new Date().toISOString();
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appState.db));
+      } catch (err) {
+        showToast('Could not save to browser localStorage.', 'error');
+      }
+      if (markUnsaved) {
+        appState.hasUnsavedChanges = true;
+      }
+      renderApp();
+
+      // Auto-save to Cloudflare D1 whenever Admin makes a mutation in Cloud mode
+      if (appState.isAdmin && (appState.cloudMode === 'live' || appState.cloudMode === 'empty')) {
+        syncToCloud(false);
+      }
+    }
+
+    /* =========================================================================
+       6. JSON BACKUP EXPORT / COPY / IMPORT
+       ========================================================================= */
+
+    function downloadJsonFile() {
+      try {
+        const jsonStr = JSON.stringify(appState.db, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `landshare-backup-${getTodayISO()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('JSON backup downloaded!');
+      } catch (err) {
+        showToast('Failed to download backup.', 'error');
+      }
+    }
+
+    function copyTextFallback(text, successMsg) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        if (ok) {
+          showToast(successMsg);
+        } else {
+          showToast('Copy failed. Please select and copy manually.', 'error');
+        }
+      } catch (err) {
+        showToast('Copy failed. Please select and copy manually.', 'error');
+      }
+    }
+
+    function copyJsonToClipboard() {
+      copyTextFallback(JSON.stringify(appState.db, null, 2), 'JSON backup copied to clipboard!');
+    }
+
+    function copyCodeBlock(elementId, label) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      copyTextFallback(el.textContent, `${label} copied to clipboard!`);
+    }
+
+    function handleJsonImport(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!isValidDatabase(parsed)) {
+            showToast('Invalid JSON format. Missing members or months.', 'error');
+            return;
+          }
+          appState.db = normalizeDatabase(parsed);
+          const sorted = [...appState.db.months].sort((a, b) => (Number(a.installmentNo) || 0) - (Number(b.installmentNo) || 0));
+          appState.selectedMonthId = sorted.length > 0 ? sorted[sorted.length - 1].id : null;
+          persistChanges(true);
+          showToast('Backup imported successfully!');
+        } catch (err) {
+          showToast('Could not parse JSON file. Check syntax.', 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    /* =========================================================================
+       7. MODAL & ADMIN AUTHENTICATION HANDLERS
+       ========================================================================= */
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    }
+
+    function requestConfirm(title, message, onConfirm) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      appState.confirmCallback = onConfirm;
+      document.getElementById('confirmProceedBtn').onclick = () => {
+        closeModal('confirmModal');
+        if (typeof appState.confirmCallback === 'function') {
+          appState.confirmCallback();
+        }
+      };
+      openModal('confirmModal');
+    }
+
+    function handleAdminAuthClick() {
+      if (appState.isAdmin) {
+        appState.isAdmin = false;
+        appState.sessionPin = '';
+        try { sessionStorage.removeItem(SESSION_PIN_KEY); } catch (e) { /* ignore */ }
+        renderApp();
+        showToast('Logged out — switched to Public Read-Only mode.', 'info');
+      } else {
+        document.getElementById('adminPinInput').value = '';
+        document.getElementById('pinErrorText').classList.add('hidden');
+        const hintEl = document.getElementById('pinHintText');
+        if (appState.cloudMode === 'live' || appState.cloudMode === 'empty') {
+          hintEl.innerHTML = 'Cloudflare D1 Mode: Enter the <strong class="text-slate-800">ADMIN_PIN</strong> configured in your Cloudflare Pages Environment Variables (default <strong class="text-slate-800">1234</strong> if unset).';
+        } else {
+          hintEl.innerHTML = 'Local Preview Mode: Default setup PIN is <strong class="text-slate-800">1234</strong>.';
+        }
+        openModal('adminLoginModal');
+        setTimeout(() => document.getElementById('adminPinInput').focus(), 100);
+      }
+    }
+
+    async function submitAdminLogin(event) {
+      event.preventDefault();
+      const inputPin = document.getElementById('adminPinInput').value.trim();
+      const errEl = document.getElementById('pinErrorText');
+      const submitBtn = document.getElementById('adminLoginSubmitBtn');
+      errEl.classList.add('hidden');
+
+      if (!inputPin) return;
+
+      // Cloud Mode: verify PIN against Cloudflare Pages Function GET /api/data?verify=1
+      if (appState.cloudMode === 'live' || appState.cloudMode === 'empty') {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verifying...';
+        try {
+          const res = await fetch('/api/data?verify=1', {
+            method: 'GET',
+            headers: { 'X-Admin-Pin': inputPin },
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (data.valid === true) {
+              appState.isAdmin = true;
+              appState.sessionPin = inputPin;
+              try { sessionStorage.setItem(SESSION_PIN_KEY, inputPin); } catch (e) { /* ignore */ }
+              closeModal('adminLoginModal');
+              renderApp();
+              showToast('Admin Mode unlocked! Changes will auto-save to Cloudflare D1.');
+              return;
+            }
+          }
+          if (res.status === 401) {
+            errEl.textContent = 'Wrong Admin PIN. Please try again.';
+          } else {
+            errEl.textContent = `Verification failed (HTTP ${res.status}). Check Cloudflare D1 binding.`;
+          }
+          errEl.classList.remove('hidden');
+        } catch (err) {
+          errEl.textContent = 'Network error while verifying PIN.';
+          errEl.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Unlock Admin';
+        }
+        return;
+      }
+
+      // Local Preview Mode: validate against local PIN (default 1234)
+      const correctPin = String(appState.db.settings.adminPin || '1234');
+      if (inputPin === correctPin) {
+        appState.isAdmin = true;
+        appState.sessionPin = inputPin;
+        try { sessionStorage.setItem(SESSION_PIN_KEY, inputPin); } catch (e) { /* ignore */ }
+        closeModal('adminLoginModal');
+        renderApp();
+        showToast('Admin Mode unlocked (Local Preview Mode).');
+      } else {
+        errEl.textContent = 'Wrong Admin PIN. Please try again.';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    /* =========================================================================
+       8. ADMIN CRUD ACTIONS (Members, Payments, Installments, DP, Expenses)
+       ========================================================================= */
+
+    /** Member Modal: Add or Edit Member */
+    function openMemberModal(memberId = null) {
+      if (!appState.isAdmin) return;
+      const existing = memberId ? appState.db.members.find((m) => m.id === memberId) : null;
+
+      document.getElementById('memberEditId').value = existing ? existing.id : '';
+      document.getElementById('memberModalTitle').textContent = existing ? 'Edit Member Details' : 'Add New Member';
+      document.getElementById('memberNameInput').value = existing ? existing.name : '';
+      document.getElementById('memberRoleInput').value = existing ? (existing.role || 'Member') : 'Member';
+      document.getElementById('memberPhoneInput').value = existing ? (existing.phone || '') : '';
+      document.getElementById('memberNoteInput').value = existing ? (existing.note || '') : '';
+
+      openModal('memberModal');
+      setTimeout(() => document.getElementById('memberNameInput').focus(), 80);
+    }
+
+    function submitMemberModal(event) {
+      event.preventDefault();
+      const editId = document.getElementById('memberEditId').value;
+      const name = document.getElementById('memberNameInput').value.trim();
+      const role = document.getElementById('memberRoleInput').value;
+      const phone = document.getElementById('memberPhoneInput').value.trim();
+      const note = document.getElementById('memberNoteInput').value.trim();
+
+      if (!name) return;
+
+      if (editId) {
+        const member = appState.db.members.find((m) => m.id === editId);
+        if (member) {
+          member.name = name;
+          member.role = role;
+          member.phone = phone;
+          member.note = note;
+        }
+        closeModal('memberModal');
+        persistChanges(true);
+        showToast(`Member "${name}" updated!`);
+      } else {
+        const newId = 'm' + Date.now();
+        appState.db.members.push({ id: newId, name, role, phone, note });
+        closeModal('memberModal');
+        persistChanges(true);
+        showToast(`New member "${name}" added and synced to installments!`);
+      }
+    }
+
+    function deleteMember(memberId) {
+      if (!appState.isAdmin) return;
+      if (appState.db.members.length <= 1) {
+        showToast('Cannot delete the last remaining member.', 'error');
+        return;
+      }
+      const member = appState.db.members.find((m) => m.id === memberId);
+      if (!member) return;
+
+      requestConfirm(
+        `Delete ${member.name}?`,
+        'This member will be removed from the member list and upcoming installments. Historical down payments will remain intact unless deleted.',
+        () => {
+          appState.db.members = appState.db.members.filter((m) => m.id !== memberId);
+          persistChanges(true);
+          showToast(`Member "${member.name}" removed.`, 'info');
+        }
+      );
+    }
+
+    /** Monthly Payment Modal: Mark Paid / Edit / Revert to Pending */
+    function openPaymentModal(monthId, memberId) {
+      if (!appState.isAdmin) return;
+      const month = appState.db.months.find((m) => m.id === monthId);
+      const member = appState.db.members.find((m) => m.id === memberId);
+      if (!month || !member) return;
+
+      const existing = (month.payments && month.payments[memberId]) || null;
+      const defaultRate = month.monthlyRate ?? appState.db.settings.monthlyRate ?? 3400;
+
+      document.getElementById('payMonthId').value = monthId;
+      document.getElementById('payMemberId').value = memberId;
+      document.getElementById('paymentModalTitle').textContent = existing && existing.paid ? 'Edit Payment Record' : 'Mark Member as Paid';
+      document.getElementById('paymentModalSubtitle').textContent = `${member.name} — Installment #${month.installmentNo} (${month.label})`;
+      document.getElementById('payAmount').value = existing && existing.paid ? existing.amount : defaultRate;
+      document.getElementById('payDate').value = (existing && existing.date) || getTodayISO();
+      document.getElementById('payMethod').value = (existing && existing.method) || 'Cash';
+      document.getElementById('payNote').value = (existing && existing.note) || '';
+
+      document.getElementById('markUnpaidBtn').classList.toggle('hidden', !(existing && existing.paid));
+      openModal('paymentModal');
+    }
+
+    function submitPaymentModal(event) {
+      event.preventDefault();
+      const monthId = document.getElementById('payMonthId').value;
+      const memberId = document.getElementById('payMemberId').value;
+      const amount = Number(document.getElementById('payAmount').value) || 0;
+      const date = document.getElementById('payDate').value;
+      const method = document.getElementById('payMethod').value;
+      const note = document.getElementById('payNote').value.trim();
+
+      const month = appState.db.months.find((m) => m.id === monthId);
+      if (!month) return;
+
+      const wasCompletedBefore = analyzeMonth(month).isCompleted;
+      if (!month.payments) month.payments = {};
+      month.payments[memberId] = { paid: true, amount, date, method, note };
+
+      const afterInfo = analyzeMonth(month);
+      closeModal('paymentModal');
+      persistChanges(true);
+
+      if (!wasCompletedBefore && afterInfo.isCompleted) {
+        showToast(`Installment #${afterInfo.installmentNo} completed! +${formatBDT(afterInfo.creditedSurplus)} auto-credited to ৳43 Fund.`);
+      } else {
+        showToast('Payment saved successfully.');
+      }
+    }
+
+    function markMemberUnpaid() {
+      const monthId = document.getElementById('payMonthId').value;
+      const memberId = document.getElementById('payMemberId').value;
+      const month = appState.db.months.find((m) => m.id === monthId);
+      if (!month || !month.payments) return;
+
+      const wasCompletedBefore = analyzeMonth(month).isCompleted;
+      delete month.payments[memberId];
+      closeModal('paymentModal');
+      persistChanges(true);
+
+      if (wasCompletedBefore) {
+        showToast(`Payment undone. +৳43 credit for Installment #${month.installmentNo} reversed.`, 'info');
+      } else {
+        showToast('Payment reverted to Pending.', 'info');
+      }
+    }
+
+    /** Add Next Installment Modal (Auto-suggests #45 / Jan 2027) */
+    function openAddMonthModal() {
+      if (!appState.isAdmin) return;
+      const now = new Date();
+      let defaultYear = now.getFullYear();
+      let defaultMonth = now.getMonth() + 1;
+      let nextInstallmentNo = TRACKING_START_INSTALLMENT;
+
+      if (appState.db.months.length > 0) {
+        const sorted = [...appState.db.months].sort((a, b) => (Number(a.installmentNo) || 0) - (Number(b.installmentNo) || 0));
+        const latest = sorted[sorted.length - 1];
+        nextInstallmentNo = (Number(latest.installmentNo) || TRACKING_START_INSTALLMENT) + 1;
+
+        const [yStr, mStr] = latest.id.split('-');
+        let y = parseInt(yStr, 10);
+        let m = parseInt(mStr, 10) + 1;
+        if (m > 12) { m = 1; y += 1; }
+        defaultYear = y;
+        defaultMonth = m;
+      }
+
+      document.getElementById('newInstallmentNo').value = nextInstallmentNo;
+      document.getElementById('newMonthSelect').value = String(defaultMonth).padStart(2, '0');
+      document.getElementById('newYearInput').value = defaultYear;
+      document.getElementById('newMonthRate').value = appState.db.settings.monthlyRate || 3400;
+      document.getElementById('newMonthOffice').value = appState.db.settings.officeDeposit || 20357;
+      openModal('addMonthModal');
+    }
+
+    function submitAddMonth(event) {
+      event.preventDefault();
+      const instNo = parseInt(document.getElementById('newInstallmentNo').value, 10);
+      const mStr = document.getElementById('newMonthSelect').value;
+      const yNum = parseInt(document.getElementById('newYearInput').value, 10);
+      const rate = Number(document.getElementById('newMonthRate').value) || 3400;
+      const office = Number(document.getElementById('newMonthOffice').value) || 20357;
+
+      const id = `${yNum}-${mStr}`;
+      if (appState.db.months.some((m) => m.id === id)) {
+        showToast('An installment for this month already exists!', 'error');
+        return;
+      }
+      if (appState.db.months.some((m) => Number(m.installmentNo) === instNo)) {
+        showToast(`Installment #${instNo} already exists!`, 'error');
+        return;
+      }
+
+      const label = `${MONTH_NAMES[parseInt(mStr, 10) - 1]} ${yNum}`;
+      appState.db.months.push({
+        id,
+        installmentNo: instNo,
+        label,
+        monthlyRate: rate,
+        officeDeposit: office,
+        payments: {}
+      });
+      appState.selectedMonthId = id;
+      closeModal('addMonthModal');
+      persistChanges(true);
+      showToast(`Installment #${instNo} (${label}) created!`);
+    }
+
+    function deleteMonth(monthId) {
+      if (!appState.isAdmin) return;
+      const month = appState.db.months.find((m) => m.id === monthId);
+      if (!month) return;
+
+      requestConfirm(
+        `Delete Installment #${month.installmentNo} (${month.label})?`,
+        'All payment records for this installment (and its auto +৳43 credit if completed) will be removed.',
+        () => {
+          appState.db.months = appState.db.months.filter((m) => m.id !== monthId);
+          const sorted = [...appState.db.months].sort((a, b) => (Number(a.installmentNo) || 0) - (Number(b.installmentNo) || 0));
+          appState.selectedMonthId = sorted.length > 0 ? sorted[sorted.length - 1].id : null;
+          persistChanges(true);
+          showToast(`Installment #${month.installmentNo} deleted.`, 'info');
+        }
+      );
+    }
+
+    /** Down Payment CRUD (Add / Edit / Delete) */
+    function openDownPaymentModal(dpId = null) {
+      if (!appState.isAdmin) return;
+      const select = document.getElementById('dpMember');
+      select.innerHTML = appState.db.members
+        .map((m) => `<option value="${escapeHtml(m.id)}">${escapeHtml(m.name)}</option>`)
+        .join('');
+
+      const existing = dpId ? appState.db.downPayments.find((d) => d.id === dpId) : null;
+      document.getElementById('dpEditId').value = existing ? existing.id : '';
+      document.getElementById('dpModalTitle').textContent = existing ? 'Edit Down Payment' : 'Record Down Payment';
+
+      if (existing) {
+        select.value = existing.memberId;
+        document.getElementById('dpAmount').value = existing.amount;
+        document.getElementById('dpDate').value = existing.date || getTodayISO();
+        document.getElementById('dpMethod').value = existing.method || 'Bank';
+        document.getElementById('dpNote').value = existing.note || '';
+      } else {
+        document.getElementById('dpAmount').value = '';
+        document.getElementById('dpDate').value = getTodayISO();
+        document.getElementById('dpMethod').value = 'Bank';
+        document.getElementById('dpNote').value = '';
+      }
+      openModal('downPaymentModal');
+    }
+
+    function submitDownPayment(event) {
+      event.preventDefault();
+      const editId = document.getElementById('dpEditId').value;
+      const payload = {
+        memberId: document.getElementById('dpMember').value,
+        amount: Number(document.getElementById('dpAmount').value) || 0,
+        date: document.getElementById('dpDate').value,
+        method: document.getElementById('dpMethod').value,
+        note: document.getElementById('dpNote').value.trim()
+      };
+
+      if (editId) {
+        const idx = appState.db.downPayments.findIndex((d) => d.id === editId);
+        if (idx !== -1) appState.db.downPayments[idx] = { id: editId, ...payload };
+        closeModal('downPaymentModal');
+        persistChanges(true);
+        showToast('Down payment updated!');
+      } else {
+        appState.db.downPayments.push({ id: 'dp-' + Date.now(), ...payload });
+        closeModal('downPaymentModal');
+        persistChanges(true);
+        showToast('Down payment recorded!');
+      }
+    }
+
+    function deleteDownPayment(dpId) {
+      if (!appState.isAdmin) return;
+      requestConfirm(
+        'Delete Down Payment?',
+        'This down payment entry will be permanently removed from the ledger.',
+        () => {
+          appState.db.downPayments = appState.db.downPayments.filter((d) => d.id !== dpId);
+          persistChanges(true);
+          showToast('Down payment deleted.', 'info');
+        }
+      );
+    }
+
+    /** Maintenance Expense CRUD (Add / Edit / Delete) */
+    function openExpenseModal(expId = null) {
+      if (!appState.isAdmin) return;
+      const existing = expId ? appState.db.expenses.find((e) => e.id === expId) : null;
+
+      document.getElementById('expEditId').value = existing ? existing.id : '';
+      document.getElementById('expenseModalTitle').textContent = existing ? 'Edit Maintenance Expense' : 'Add Maintenance Expense';
+      document.getElementById('expDate').value = existing ? (existing.date || getTodayISO()) : getTodayISO();
+      document.getElementById('expAmount').value = existing ? existing.amount : '';
+      document.getElementById('expCategory').value = existing ? (existing.category || 'Khata / Kolom') : 'Khata / Kolom';
+      document.getElementById('expItem').value = existing ? (existing.item || '') : '';
+      document.getElementById('expNote').value = existing ? (existing.note || '') : '';
+      openModal('expenseModal');
+    }
+
+    function submitExpense(event) {
+      event.preventDefault();
+      const editId = document.getElementById('expEditId').value;
+      const payload = {
+        date: document.getElementById('expDate').value,
+        category: document.getElementById('expCategory').value,
+        item: document.getElementById('expItem').value.trim(),
+        amount: Number(document.getElementById('expAmount').value) || 0,
+        note: document.getElementById('expNote').value.trim()
+      };
+
+      if (editId) {
+        const idx = appState.db.expenses.findIndex((e) => e.id === editId);
+        if (idx !== -1) appState.db.expenses[idx] = { id: editId, ...payload };
+        closeModal('expenseModal');
+        persistChanges(true);
+        showToast('Expense updated!');
+      } else {
+        appState.db.expenses.push({ id: 'exp-' + Date.now(), ...payload });
+        closeModal('expenseModal');
+        persistChanges(true);
+        showToast('Maintenance expense recorded!');
+      }
+    }
+
+    function deleteExpense(expId) {
+      if (!appState.isAdmin) return;
+      requestConfirm(
+        'Delete Expense?',
+        'This maintenance expense will be removed and your ৳43 fund balance will recalculate.',
+        () => {
+          appState.db.expenses = appState.db.expenses.filter((e) => e.id !== expId);
+          persistChanges(true);
+          showToast('Expense removed.', 'info');
+        }
+      );
+    }
+
+    /** Project Settings & Reset */
+    function saveProjectSettings(event) {
+      event.preventDefault();
+      const title = document.getElementById('settingProjectTitle').value.trim();
+      const rate = Number(document.getElementById('settingMonthlyRate').value) || 3400;
+      const office = Number(document.getElementById('settingOfficeDeposit').value) || 20357;
+      const newPin = document.getElementById('settingAdminPin').value.trim();
+
+      if (title) appState.db.projectTitle = title;
+      appState.db.settings.monthlyRate = rate;
+      appState.db.settings.officeDeposit = office;
+      if (newPin.length >= 4) {
+        appState.db.settings.adminPin = newPin;
+      }
+
+      persistChanges(true);
+      showToast('Project settings saved!');
+    }
+
+    function resetToSampleData() {
+      requestConfirm(
+        'Reset to Default Dataset (#20–#44)?',
+        'This will overwrite your current data with the default dataset (#20–#43 Completed, #44 December 2026 Upcoming). In Cloud mode, this will also sync to Cloudflare D1.',
+        () => {
+          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          appState.db = getSampleDatabase();
+          const sorted = [...appState.db.months].sort((a, b) => (Number(a.installmentNo) || 0) - (Number(b.installmentNo) || 0));
+          appState.selectedMonthId = sorted[sorted.length - 1].id;
+          persistChanges(true);
+          showToast('Reset to default dataset complete.', 'info');
+        }
+      );
+    }
+
+    /* =========================================================================
+       9. UI RENDERING FUNCTIONS
+       ========================================================================= */
+
+    function switchTab(tabName) {
+      appState.activeTab = tabName;
+      renderApp();
+    }
+
+    function selectMonth(monthId) {
+      appState.selectedMonthId = monthId;
+      renderApp();
+    }
+
+    function stepInstallment(delta) {
+      const sorted = [...(appState.db.months || [])].sort((a, b) => (Number(a.installmentNo) || 0) - (Number(b.installmentNo) || 0));
+      const idx = sorted.findIndex((m) => m.id === appState.selectedMonthId);
+      if (idx === -1) return;
+      const target = sorted[idx + delta];
+      if (target) {
+        appState.selectedMonthId = target.id;
+        renderApp();
+      }
+    }
+
+    function setExpenseFilter(filter) {
+      appState.expenseFilter = filter;
+      renderTabContent(computeProjectMetrics());
+    }
+
+    function renderApp() {
+      if (!appState.db) return;
+      const metrics = computeProjectMetrics();
+      renderHeader();
+      renderKPIs(metrics);
+      renderTabButtons();
+      renderTabContent(metrics);
+      document.getElementById('footerLastUpdated').textContent = `Last updated: ${formatTimestamp(appState.db.lastUpdated)}`;
+    }
+
+    function renderHeader() {
+      document.getElementById('headerProjectTitle').textContent = appState.db.projectTitle || 'Dakhina City F-384';
+
+      // Cloud / Local Data Source Badge
+      const badge = document.getElementById('dataSourceBadge');
+      if (appState.cloudMode === 'live') {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold';
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Cloudflare D1 Live`;
+      } else if (appState.cloudMode === 'empty') {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-semibold';
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> D1 Connected (Not Initialized)`;
+      } else {
+        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-semibold';
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Local Preview Mode`;
+      }
+
+      // Live Syncing Spinner Badge
+      const spinnerBadge = document.getElementById('syncSpinnerBadge');
+      if (spinnerBadge) {
+        spinnerBadge.classList.toggle('hidden', !appState.isSyncing);
+      }
+
+      const modeBadge = document.getElementById('modeBadge');
+      const authBtn = document.getElementById('adminAuthBtn');
+      const authText = document.getElementById('adminAuthText');
+      const manageBtn = document.getElementById('headerManageMembersBtn');
+      const syncBar = document.getElementById('adminSyncBar');
+      const syncDot = document.getElementById('syncStatusDot');
+      const syncText = document.getElementById('syncStatusText');
+      const initCloudDbBtn = document.getElementById('initCloudDbBtn');
+      const syncNowBtn = document.getElementById('syncNowBtn');
+
+      if (appState.isAdmin) {
+        modeBadge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold';
+        modeBadge.textContent = 'Admin Mode';
+        authBtn.className = 'inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer';
+        authText.textContent = 'Logout';
+        manageBtn.classList.remove('hidden');
+        syncBar.classList.remove('hidden');
+
+        initCloudDbBtn.classList.toggle('hidden', appState.cloudMode !== 'empty');
+        syncNowBtn.disabled = appState.isSyncing;
+
+        if (appState.isSyncing) {
+          syncBar.className = 'border-t transition-colors bg-slate-900 text-white border-slate-800';
+          syncDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping shrink-0';
+          syncText.className = 'font-medium text-amber-200';
+          syncText.textContent = 'Syncing changes to Cloudflare D1...';
+        } else if (appState.lastSyncError) {
+          syncBar.className = 'border-t transition-colors bg-rose-50 text-rose-950 border-rose-200';
+          syncDot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+          syncText.className = 'font-medium text-rose-900';
+          syncText.innerHTML = `Cloud sync failed (${escapeHtml(appState.lastSyncError)}) &bull; Click <strong>Save / Sync Now</strong> to retry.`;
+        } else if (appState.cloudMode === 'empty') {
+          syncBar.className = 'border-t transition-colors bg-sky-50 text-sky-950 border-sky-200';
+          syncDot.className = 'w-2 h-2 rounded-full bg-sky-500 animate-pulse shrink-0';
+          syncText.className = 'font-medium text-sky-900';
+          syncText.innerHTML = 'Cloudflare D1 is empty! Click <strong>Initialize Cloud DB</strong> to upload the #20–#44 dataset.';
+        } else if (appState.cloudMode === 'local') {
+          syncBar.className = 'border-t transition-colors bg-amber-50 text-amber-950 border-amber-200';
+          syncDot.className = 'w-2 h-2 rounded-full bg-amber-500 shrink-0';
+          syncText.className = 'font-medium text-amber-900';
+          syncText.innerHTML = 'Local Preview Mode &bull; Saving to browser storage. Deploy to Cloudflare Pages for live D1 sync.';
+        } else {
+          syncBar.className = 'border-t transition-colors bg-slate-900 text-white border-slate-800';
+          syncDot.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
+          syncText.className = 'font-medium text-slate-200';
+          syncText.innerHTML = 'Connected to <strong>Cloudflare D1</strong> &bull; Every edit auto-saves live for all members.';
+        }
+      } else {
+        modeBadge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-medium';
+        modeBadge.textContent = 'Public Read-Only';
+        authBtn.className = 'inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm cursor-pointer';
+        authText.textContent = 'Admin Login';
+        manageBtn.classList.add('hidden');
+        syncBar.classList.add('hidden');
+      }
+    }
+
+    function renderKPIs(metrics) {
+      const latestMonth = metrics.sortedMonths[metrics.sortedMonths.length - 1] || null;
+      const latestInfo = latestMonth ? analyzeMonth(latestMonth) : null;
+      const latestShortLabel = latestMonth
+        ? (() => {
+            const [y, m] = latestMonth.id.split('-');
+            return `${SHORT_MONTH_NAMES[parseInt(m, 10) - 1] || ''} ${y}`;
+          })()
+        : '';
+      const pct = latestInfo && latestInfo.totalMembers > 0
+        ? Math.round((latestInfo.paidCount / latestInfo.totalMembers) * 100)
+        : 0;
+      const balanceColor = metrics.maintenanceBalance >= 0 ? 'text-emerald-700' : 'text-rose-600';
+
+      document.getElementById('kpiGrid').innerHTML = `
+        <!-- KPI 1: Active / Upcoming Installment -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Installment</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full ${latestInfo && latestInfo.isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">
+              ${latestInfo ? (latestInfo.isCompleted ? 'Completed' : `${latestInfo.paidCount}/${latestInfo.totalMembers} Paid`) : '—'}
+            </span>
+          </div>
+          <div class="mt-2.5">
+            <div class="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums">
+              ${latestMonth ? `#${latestMonth.installmentNo} — ${escapeHtml(latestShortLabel)}` : 'None'}
+            </div>
+            <p class="text-xs text-slate-500 mt-1 tabular-nums">
+              Collected: <strong class="text-slate-700">${latestInfo ? formatBDT(latestInfo.collectedTotal) : '৳0'}</strong> / ${latestInfo ? formatBDT(latestInfo.expectedTotal) : '৳20,400'}
+            </p>
+            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-2">
+              <div class="h-full rounded-full transition-all duration-500 ${latestInfo && latestInfo.isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Total Office Deposit -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Office Deposit (#${metrics.minInstNo}–#${metrics.maxInstNo})</span>
+            <span class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            </span>
+          </div>
+          <div class="mt-2.5">
+            <div class="text-2xl font-extrabold text-slate-900 tabular-nums">${formatBDT(metrics.totalOfficeDeposited)}</div>
+            <p class="text-xs text-slate-500 mt-1">
+              <strong>${metrics.completedMonthsCount}</strong> of ${metrics.totalMonthsCount} tracked installments completed
+            </p>
+          </div>
+        </div>
+
+        <!-- KPI 3: ৳43 Surplus Fund Balance -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">৳43 Surplus Fund</span>
+            <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            </span>
+          </div>
+          <div class="mt-2.5">
+            <div class="text-2xl font-extrabold tabular-nums ${balanceColor}">${formatBDT(metrics.maintenanceBalance)}</div>
+            <p class="text-xs text-slate-500 mt-1 tabular-nums">
+              <span class="text-emerald-600 font-semibold">+${formatBDT(metrics.totalSurplusCredited)}</span> earned &bull;
+              <span class="text-rose-600 font-semibold">−${formatBDT(metrics.totalExpensesSpent)}</span> spent
+            </p>
+          </div>
+        </div>
+
+        <!-- KPI 4: Total Down Payment -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Down Payment</span>
+            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+          </div>
+          <div class="mt-2.5">
+            <div class="text-2xl font-extrabold text-slate-900 tabular-nums">${formatBDT(metrics.downPaymentTotal)}</div>
+            <p class="text-xs text-slate-500 mt-1 tabular-nums">
+              Grand Total Paid: <strong class="text-slate-700">${formatBDT(metrics.grandTotalCollected)}</strong>
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTabButtons() {
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        const isActive = btn.dataset.tab === appState.activeTab;
+        if (isActive) {
+          btn.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+          btn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+        } else {
+          btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+          btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+        }
+      });
+    }
+
+    function renderTabContent(metrics) {
+      const container = document.getElementById('tabContent');
+      switch (appState.activeTab) {
+        case 'monthly':
+          container.innerHTML = buildMonthlyTabHTML(metrics);
+          break;
+        case 'downpayments':
+          container.innerHTML = buildDownPaymentsTabHTML(metrics);
+          break;
+        case 'expenditure':
+          container.innerHTML = buildExpenditureTabHTML(metrics);
+          break;
+        case 'members':
+          container.innerHTML = buildMembersAndSyncTabHTML(metrics);
+          break;
+      }
+    }
+
+    /* ---------- TAB 1: MONTHLY INSTALLMENTS ---------- */
+    function buildMonthlyTabHTML(metrics) {
+      const monthsDesc = [...metrics.sortedMonths].reverse();
+      const selectedMonth = appState.db.months.find((m) => m.id === appState.selectedMonthId) || monthsDesc[0] || null;
+      const info = selectedMonth ? analyzeMonth(selectedMonth) : null;
+
+      const ascIdx = selectedMonth ? metrics.sortedMonths.findIndex((m) => m.id === selectedMonth.id) : -1;
+      const hasPrev = ascIdx > 0;
+      const hasNext = ascIdx !== -1 && ascIdx < metrics.sortedMonths.length - 1;
+      const pct = info && info.totalMembers > 0 ? Math.round((info.paidCount / info.totalMembers) * 100) : 0;
+
+      const monthOptions = monthsDesc.map((m) => {
+        const mInfo = analyzeMonth(m);
+        const tag = mInfo.isCompleted ? 'Completed' : `Pending — ${mInfo.paidCount}/${mInfo.totalMembers} Paid`;
+        return `<option value="${escapeHtml(m.id)}" ${selectedMonth && m.id === selectedMonth.id ? 'selected' : ''}>#${m.installmentNo} — ${escapeHtml(m.label)} (${tag})</option>`;
+      }).join('');
+
+      let memberRowsHTML = '';
+      if (selectedMonth) {
+        memberRowsHTML = appState.db.members.map((member, idx) => {
+          const rec = selectedMonth.payments && selectedMonth.payments[member.id];
+          const isPaid = !!(rec && rec.paid);
+          const displayAmount = isPaid ? rec.amount : info.rate;
+
+          return `
+            <tr class="hover:bg-slate-50/80 transition border-b border-slate-100 last:border-b-0">
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <span class="w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0 ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+                    ${idx + 1}
+                  </span>
+                  <div>
+                    <div class="font-semibold text-slate-900 text-sm flex items-center gap-1.5">
+                      <span>${escapeHtml(member.name)}</span>
+                      ${member.role === 'Admin' ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-900 text-white">Admin</span>' : ''}
+                    </div>
+                    ${member.phone ? `<div class="text-xs text-slate-400">${escapeHtml(member.phone)}</div>` : ''}
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3.5 font-bold text-slate-800 tabular-nums text-sm whitespace-nowrap">
+                ${formatBDT(displayAmount)}
+              </td>
+              <td class="px-4 py-3.5 whitespace-nowrap">
+                ${isPaid
+                  ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Paid
+                    </span>`
+                  : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                    </span>`
+                }
+              </td>
+              <td class="px-4 py-3.5 text-sm tabular-nums whitespace-nowrap ${isPaid ? 'text-slate-700 font-medium' : 'text-slate-400'}">
+                ${isPaid && rec.date ? escapeHtml(rec.date) : '—'}
+              </td>
+              <td class="px-4 py-3.5 text-xs text-slate-600">
+                ${isPaid
+                  ? `<span class="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium mr-1.5">${escapeHtml(rec.method || 'Cash')}</span>${escapeHtml(rec.note || '')}`
+                  : '<span class="text-slate-400">Awaiting deposit</span>'
+                }
+              </td>
+              ${appState.isAdmin ? `
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <button onclick="openPaymentModal('${escapeHtml(selectedMonth.id)}', '${escapeHtml(member.id)}')"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${isPaid
+                      ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs'}">
+                    ${isPaid ? 'Edit / Undo' : 'Mark Paid'}
+                  </button>
+                </td>
+              ` : ''}
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const overviewRows = monthsDesc.map((m) => {
+        const mInfo = analyzeMonth(m);
+        const isSelected = selectedMonth && m.id === selectedMonth.id;
+        return `
+          <tr class="border-b border-slate-100 last:border-b-0 transition ${isSelected ? 'bg-emerald-50/50' : 'hover:bg-slate-50/80'}">
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-800'}">
+                #${m.installmentNo}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap">${escapeHtml(m.label)}</td>
+            <td class="px-4 py-3 text-xs font-semibold whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-full ${mInfo.isCompleted ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
+                ${mInfo.paidCount} / ${mInfo.totalMembers} Paid
+              </span>
+            </td>
+            <td class="px-4 py-3 text-sm font-semibold text-slate-800 tabular-nums whitespace-nowrap">${formatBDT(mInfo.collectedTotal)}</td>
+            <td class="px-4 py-3 text-sm text-slate-700 tabular-nums whitespace-nowrap">
+              ${mInfo.isCompleted ? formatBDT(mInfo.officeDeposit) : '<span class="text-slate-400">Pending</span>'}
+            </td>
+            <td class="px-4 py-3 text-xs font-semibold whitespace-nowrap">
+              ${mInfo.isCompleted
+                ? `<span class="text-emerald-700">+${formatBDT(mInfo.creditedSurplus)} Credited</span>`
+                : `<span class="text-amber-600">+${formatBDT(mInfo.potentialSurplus)} Pending</span>`
+              }
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <button onclick="selectMonth('${escapeHtml(m.id)}'); window.scrollTo({top: 0, behavior: 'smooth'});"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${isSelected
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                ${isSelected ? 'Viewing' : 'View'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <!-- Selected Installment Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="stepInstallment(-1)" ${!hasPrev ? 'disabled' : ''}
+                class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-35 disabled:cursor-not-allowed transition cursor-pointer"
+                title="Previous Installment">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+
+              <select id="monthSelector" onchange="selectMonth(this.value)"
+                class="px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none cursor-pointer max-w-full">
+                ${monthOptions || '<option>No installments yet</option>'}
+              </select>
+
+              <button onclick="stepInstallment(1)" ${!hasNext ? 'disabled' : ''}
+                class="p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-35 disabled:cursor-not-allowed transition cursor-pointer"
+                title="Next Installment">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+
+            ${appState.isAdmin ? `
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="openAddMonthModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                  + Add Next Installment (#${metrics.maxInstNo + 1})
+                </button>
+                ${selectedMonth ? `
+                  <button onclick="deleteMonth('${escapeHtml(selectedMonth.id)}')" class="p-2 rounded-xl text-rose-600 hover:bg-rose-50 transition cursor-pointer" title="Delete this installment">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                ` : ''}
+              </div>
+            ` : ''}
+          </div>
+
+          ${selectedMonth ? `
+            <!-- Active Installment Detail Summary -->
+            <div class="px-4 sm:px-5 py-4 ${info.isCompleted ? 'bg-emerald-50/70 border-b border-emerald-100' : 'bg-slate-50 border-b border-slate-100'} space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="px-3 py-1 rounded-xl text-sm font-extrabold ${info.isCompleted ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-white'}">
+                    Installment #${selectedMonth.installmentNo}
+                  </span>
+                  <span class="text-base font-bold text-slate-900">${escapeHtml(selectedMonth.label)}</span>
+                </div>
+                <div>
+                  ${info.isCompleted
+                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-600 text-white font-semibold text-xs shadow-xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        Completed (Office Deposit: ${formatBDT(info.officeDeposit)}) &bull; +${formatBDT(info.creditedSurplus)} Credited
+                      </span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold text-xs">
+                        ${info.paidCount}/${info.totalMembers} Paid &bull; +${formatBDT(info.potentialSurplus)} Pending Completion
+                      </span>`
+                  }
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs sm:text-sm items-center">
+                <div>
+                  <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                    <span>Progress (${info.paidCount}/${info.totalMembers} Paid)</span>
+                    <span>${pct}%</span>
+                  </div>
+                  <div class="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500 ${info.isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}" style="width: ${pct}%"></div>
+                  </div>
+                </div>
+                <div class="sm:text-center">
+                  <span class="text-slate-500">Collected:</span>
+                  <strong class="text-slate-900 tabular-nums ml-1">${formatBDT(info.collectedTotal)}</strong>
+                  <span class="text-slate-400 text-xs">/ ${formatBDT(info.expectedTotal)}</span>
+                </div>
+                <div class="sm:text-right">
+                  <span class="text-slate-500">Office Deposit:</span>
+                  <strong class="text-slate-900 tabular-nums ml-1">${formatBDT(info.officeDeposit)}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Member Payment Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-slate-50/70 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <th class="px-4 py-3">Member</th>
+                    <th class="px-4 py-3">Amount</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Payment Date</th>
+                    <th class="px-4 py-3">Method &amp; Note</th>
+                    ${appState.isAdmin ? '<th class="px-4 py-3 text-right">Action</th>' : ''}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${memberRowsHTML}
+                </tbody>
+              </table>
+            </div>
+          ` : `
+            <div class="p-10 text-center text-slate-500 text-sm">
+              No installments created yet. ${appState.isAdmin ? 'Click "+ Add Next Installment" to begin.' : ''}
+            </div>
+          `}
+        </div>
+
+        <!-- All Installments Overview Table (#20 to #44+) -->
+        ${metrics.sortedMonths.length > 0 ? `
+          <details open class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <summary class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 cursor-pointer select-none hover:bg-slate-50/60 transition">
+              <div>
+                <h2 class="text-sm font-bold text-slate-900">All Installments Overview (#${metrics.minInstNo} to #${metrics.maxInstNo})</h2>
+                <p class="text-xs text-slate-500">Showing ${metrics.totalMonthsCount} tracked installments &bull; ${metrics.completedMonthsCount} completed (+${formatBDT(metrics.totalSurplusCredited)} total surplus)</p>
+              </div>
+              <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                Click "View" to inspect
+              </span>
+            </summary>
+            <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
+              <table class="w-full text-left border-collapse">
+                <thead class="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
+                  <tr class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    <th class="px-4 py-3">Inst #</th>
+                    <th class="px-4 py-3">Month</th>
+                    <th class="px-4 py-3">Paid Count</th>
+                    <th class="px-4 py-3">Collected</th>
+                    <th class="px-4 py-3">Office Deposit</th>
+                    <th class="px-4 py-3">+৳43 Status</th>
+                    <th class="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${overviewRows}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        ` : ''}
+      `;
+    }
+
+    /* ---------- TAB 2: DOWN PAYMENTS ---------- */
+    function buildDownPaymentsTabHTML(metrics) {
+      const sortedDPs = [...(appState.db.downPayments || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const memberMap = Object.fromEntries(appState.db.members.map((m) => [m.id, m.name]));
+
+      const rows = sortedDPs.map((dp) => `
+        <tr class="hover:bg-slate-50/80 border-b border-slate-100 last:border-b-0">
+          <td class="px-4 py-3.5 text-sm font-semibold text-slate-900">${escapeHtml(memberMap[dp.memberId] || dp.memberId)}</td>
+          <td class="px-4 py-3.5 text-sm font-bold text-emerald-700 tabular-nums">${formatBDT(dp.amount)}</td>
+          <td class="px-4 py-3.5 text-sm text-slate-700 tabular-nums whitespace-nowrap">${escapeHtml(dp.date || '—')}</td>
+          <td class="px-4 py-3.5 text-xs">
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">${escapeHtml(dp.method || 'Cash')}</span>
+          </td>
+          <td class="px-4 py-3.5 text-xs text-slate-600">${escapeHtml(dp.note || '—')}</td>
+          ${appState.isAdmin ? `
+            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+              <button onclick="openDownPaymentModal('${escapeHtml(dp.id)}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer mr-1">
+                Edit
+              </button>
+              <button onclick="deleteDownPayment('${escapeHtml(dp.id)}')" class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer align-middle" title="Delete entry">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </td>
+          ` : ''}
+        </tr>
+      `).join('');
+
+      return `
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">One-Time Down Payments</h2>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Total Collected: <strong class="text-emerald-700 tabular-nums">${formatBDT(metrics.downPaymentTotal)}</strong> across ${sortedDPs.length} record(s)
+              </p>
+            </div>
+            ${appState.isAdmin ? `
+              <button onclick="openDownPaymentModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Record Down Payment
+              </button>
+            ` : ''}
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="px-4 py-3">Member</th>
+                  <th class="px-4 py-3">Amount</th>
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Method</th>
+                  <th class="px-4 py-3">Note</th>
+                  ${appState.isAdmin ? '<th class="px-4 py-3 text-right">Action</th>' : ''}
+                </tr>
+              </thead>
+              <tbody>
+                ${rows || `<tr><td colspan="${appState.isAdmin ? 6 : 5}" class="px-4 py-8 text-center text-sm text-slate-400">No down payments recorded yet.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ---------- TAB 3: EXPENDITURE & ৳43 FUND ---------- */
+    function buildExpenditureTabHTML(metrics) {
+      const filtered = metrics.combinedLedger.filter((entry) => {
+        if (appState.expenseFilter === 'credit') return entry.type === 'credit';
+        if (appState.expenseFilter === 'expense') return entry.type === 'expense';
+        return true;
+      });
+
+      const rows = filtered.map((entry) => {
+        const isCredit = entry.type === 'credit';
+        return `
+          <tr class="hover:bg-slate-50/80 border-b border-slate-100 last:border-b-0">
+            <td class="px-4 py-3.5 text-sm text-slate-700 tabular-nums whitespace-nowrap">${escapeHtml(entry.date)}</td>
+            <td class="px-4 py-3.5 whitespace-nowrap">
+              ${isCredit
+                ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">+৳43 Inst #${entry.installmentNo}</span>`
+                : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">${escapeHtml(entry.category)}</span>`
+              }
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="text-sm font-semibold text-slate-900">${escapeHtml(entry.item)}</div>
+              ${entry.note ? `<div class="text-xs text-slate-500 mt-0.5">${escapeHtml(entry.note)}</div>` : ''}
+            </td>
+            <td class="px-4 py-3.5 text-right font-bold tabular-nums whitespace-nowrap ${isCredit ? 'text-emerald-600' : 'text-rose-600'}">
+              ${isCredit ? '+' : '−'}${formatBDT(entry.amount)}
+            </td>
+            ${appState.isAdmin ? `
+              <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                ${isCredit
+                  ? `<span class="text-[11px] font-medium text-slate-400" title="Automatically generated from completed installment">Auto</span>`
+                  : `<button onclick="openExpenseModal('${escapeHtml(entry.id)}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer mr-1">
+                      Edit
+                    </button>
+                    <button onclick="deleteExpense('${escapeHtml(entry.id)}')" class="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer align-middle" title="Delete expense">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>`
+                }
+              </td>
+            ` : ''}
+          </tr>
+        `;
+      }).join('');
+
+      const filterBtnClass = (key) => appState.expenseFilter === key
+        ? 'bg-slate-900 text-white'
+        : 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+
+      return `
+        <!-- 3 Mini Summary Cards for the Maintenance Fund -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4">
+            <div class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Total +৳43 Earned (Since #20)</div>
+            <div class="text-2xl font-extrabold text-emerald-800 mt-1 tabular-nums">+${formatBDT(metrics.totalSurplusCredited)}</div>
+            <div class="text-xs text-emerald-700/80 mt-0.5">${metrics.completedMonthsCount} completed installment(s)</div>
+          </div>
+          <div class="bg-rose-50/70 border border-rose-200 rounded-2xl p-4">
+            <div class="text-xs font-semibold text-rose-700 uppercase tracking-wider">Total Maintenance Expenses</div>
+            <div class="text-2xl font-extrabold text-rose-800 mt-1 tabular-nums">−${formatBDT(metrics.totalExpensesSpent)}</div>
+            <div class="text-xs text-rose-700/80 mt-0.5">${(appState.db.expenses || []).length} expense item(s)</div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Net ৳43 Fund Balance</div>
+            <div class="text-2xl font-extrabold mt-1 tabular-nums ${metrics.maintenanceBalance >= 0 ? 'text-slate-900' : 'text-rose-600'}">
+              ${formatBDT(metrics.maintenanceBalance)}
+            </div>
+            <div class="text-xs text-slate-500 mt-0.5">Available for khata, kolom, files</div>
+          </div>
+        </div>
+
+        <!-- Combined Ledger Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="setExpenseFilter('all')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${filterBtnClass('all')}">
+                All Entries (${metrics.combinedLedger.length})
+              </button>
+              <button onclick="setExpenseFilter('credit')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${filterBtnClass('credit')}">
+                +৳43 Credits
+              </button>
+              <button onclick="setExpenseFilter('expense')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${filterBtnClass('expense')}">
+                Expenses Only
+              </button>
+            </div>
+
+            ${appState.isAdmin ? `
+              <button onclick="openExpenseModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-xs transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                + Add Expense
+              </button>
+            ` : ''}
+          </div>
+
+          <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
+            <table class="w-full text-left border-collapse">
+              <thead class="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
+                <tr class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Type / Category</th>
+                  <th class="px-4 py-3">Description &amp; Note</th>
+                  <th class="px-4 py-3 text-right">Amount</th>
+                  ${appState.isAdmin ? '<th class="px-4 py-3 text-right">Action</th>' : ''}
+                </tr>
+              </thead>
+              <tbody>
+                ${rows || `<tr><td colspan="${appState.isAdmin ? 5 : 4}" class="px-4 py-8 text-center text-sm text-slate-400">No ledger entries match this filter.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ---------- TAB 4: MEMBERS & CLOUD SYNC ---------- */
+    function buildMembersAndSyncTabHTML(metrics) {
+      const totalMonths = metrics.totalMonthsCount;
+
+      // Public Read-Only Info Banner guiding how to edit/add members
+      const readOnlyBanner = !appState.isAdmin ? `
+        <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3 text-sm text-sky-900">
+            <span class="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            <p class="font-medium">
+              Member name edit ba add korte upore <strong>'Admin Login'</strong> click korun.
+            </p>
+          </div>
+          <button onclick="handleAdminAuthClick()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 shadow-xs transition cursor-pointer shrink-0">
+            Admin Login
+          </button>
+        </div>
+      ` : `
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Manage Project Members (${appState.db.members.length})</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Edit any member's name, phone, or role, or add a new member to sync with installments.</p>
+          </div>
+          <button onclick="openMemberModal()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            + Add Member
+          </button>
+        </div>
+      `;
+
+      const memberCards = appState.db.members.map((member, idx) => {
+        const dpSum = (appState.db.downPayments || [])
+          .filter((d) => d.memberId === member.id)
+          .reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+
+        let monthlySum = 0;
+        let monthsPaid = 0;
+        (appState.db.months || []).forEach((m) => {
+          const rec = m.payments && m.payments[member.id];
+          if (rec && rec.paid) {
+            monthsPaid += 1;
+            monthlySum += Number(rec.amount) || 0;
+          }
+        });
+
+        const pendingMonths = Math.max(0, totalMonths - monthsPaid);
+        const totalContributed = dpSum + monthlySum;
+
+        return `
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between gap-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 font-bold flex items-center justify-center text-sm shrink-0">
+                  #${idx + 1}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <h3 class="font-bold text-slate-900 text-sm sm:text-base truncate">${escapeHtml(member.name)}</h3>
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${member.role === 'Admin' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}">
+                      ${escapeHtml(member.role || 'Member')}
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5 truncate">${escapeHtml(member.phone || 'No phone')}${member.note ? ` &bull; ${escapeHtml(member.note)}` : ''}</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 ${pendingMonths === 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}">
+                ${pendingMonths === 0 ? 'All Clear' : `${pendingMonths} Pending`}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-xs">
+              <div class="bg-slate-50 rounded-xl p-3">
+                <span class="text-slate-500 block">Down Payment</span>
+                <span class="text-sm font-bold text-slate-900 tabular-nums mt-0.5 block">${formatBDT(dpSum)}</span>
+              </div>
+              <div class="bg-slate-50 rounded-xl p-3">
+                <span class="text-slate-500 block">Installments Paid</span>
+                <span class="text-sm font-bold text-slate-900 tabular-nums mt-0.5 block">${formatBDT(monthlySum)} <span class="text-[11px] font-normal text-slate-500">(${monthsPaid}/${totalMonths})</span></span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div>
+                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Total Paid</span>
+                <span class="text-lg font-extrabold text-emerald-700 tabular-nums">${formatBDT(totalContributed)}</span>
+              </div>
+              ${appState.isAdmin ? `
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openMemberModal('${escapeHtml(member.id)}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-800 hover:bg-slate-200 transition cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Edit
+                  </button>
+                  <button onclick="deleteMember('${escapeHtml(member.id)}')" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition cursor-pointer" title="Delete member">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Delete
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const adminSettingsHTML = appState.isAdmin ? `
+        <form onsubmit="saveProjectSettings(event)" class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Project Settings</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Configure default monthly installment (৳3,400), office deposit (৳20,357), and local preview PIN.</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <label for="settingProjectTitle" class="block text-xs font-semibold text-slate-600 mb-1">Project Title</label>
+              <input id="settingProjectTitle" type="text" required value="${escapeHtml(appState.db.projectTitle || '')}"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+            </div>
+            <div>
+              <label for="settingMonthlyRate" class="block text-xs font-semibold text-slate-600 mb-1">Per Member Rate (৳)</label>
+              <input id="settingMonthlyRate" type="number" min="1" required value="${escapeHtml(appState.db.settings.monthlyRate)}"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+            </div>
+            <div>
+              <label for="settingOfficeDeposit" class="block text-xs font-semibold text-slate-600 mb-1">Office Deposit / Month (৳)</label>
+              <input id="settingOfficeDeposit" type="number" min="0" required value="${escapeHtml(appState.db.settings.officeDeposit)}"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tabular-nums focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+            </div>
+            <div>
+              <label for="settingAdminPin" class="block text-xs font-semibold text-slate-600 mb-1">Local Preview PIN (4+ digits)</label>
+              <input id="settingAdminPin" type="text" minlength="4" required value="${escapeHtml(appState.db.settings.adminPin || '1234')}"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-semibold tracking-widest focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none" />
+            </div>
+          </div>
+          <div class="flex justify-end pt-1">
+            <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 shadow-xs cursor-pointer">
+              Save Settings
+            </button>
+          </div>
+        </form>
+      ` : '';
+
+      const cloudStatusPill = appState.cloudMode === 'live'
+        ? '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Cloudflare D1 Live</span>'
+        : appState.cloudMode === 'empty'
+          ? '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200"><span class="w-2 h-2 rounded-full bg-sky-500"></span> D1 Connected (Not Initialized)</span>'
+          : '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Local Preview Mode</span>';
+
+      const backendFunctionCode = `export async function onRequestGet({ request, env }) {
+  try {
+    const url = new URL(request.url);
+    // Admin PIN Verification endpoint: GET /api/data?verify=1
+    if (url.searchParams.get("verify") === "1") {
+      const adminPin = request.headers.get("X-Admin-Pin");
+      const expectedPin = env.ADMIN_PIN || "1234";
+      if (!adminPin || adminPin !== expectedPin) {
+        return new Response(JSON.stringify({ valid: false, error: "Wrong Admin PIN" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+        });
+      }
+      return new Response(JSON.stringify({ valid: true }), {
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+      });
+    }
+
+    const row = await env.DB.prepare(
+      "SELECT payload, updated_at FROM app_state WHERE id = 1"
+    ).first();
+
+    if (!row) {
+      return new Response(JSON.stringify({ empty: true }), {
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+      });
+    }
+
+    return new Response(row.payload, {
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+}
+
+export async function onRequestPost({ request, env }) {
+  try {
+    const adminPin = request.headers.get("X-Admin-Pin");
+    const expectedPin = env.ADMIN_PIN || "1234";
+
+    if (!adminPin || adminPin !== expectedPin) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Wrong Admin PIN" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    const bodyText = await request.text();
+    JSON.parse(bodyText); // Validate JSON before saving
+
+    await env.DB.prepare(
+      "INSERT OR REPLACE INTO app_state (id, payload, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP)"
+    ).bind(bodyText).run();
+
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+}`;
+
+      const sqlSchemaCode = `CREATE TABLE IF NOT EXISTS app_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  payload TEXT NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);`;
+
+      return `
+        ${readOnlyBanner}
+
+        <!-- Member Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${memberCards}
+        </div>
+
+        ${adminSettingsHTML}
+
+        <!-- Cloudflare D1 Cloud Sync & Backup Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-5">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-base font-bold text-slate-900">Cloudflare D1 Live Sync &amp; Backup</h2>
+                ${cloudStatusPill}
+              </div>
+              <p class="text-xs text-slate-500">
+                Endpoint: <code class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">/api/data</code> &bull; Last updated: <strong>${escapeHtml(formatTimestamp(appState.db.lastUpdated))}</strong>
+              </p>
+              ${appState.lastSyncError ? `<p class="text-xs font-semibold text-rose-600">Last sync error: ${escapeHtml(appState.lastSyncError)}</p>` : ''}
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="refreshFromCloud()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Refresh from Cloud
+              </button>
+              ${appState.isAdmin ? `
+                <button onclick="syncToCloud(true)" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs transition cursor-pointer">
+                  ${appState.cloudMode === 'empty' ? 'Initialize Cloud DB' : 'Force Push to Cloud'}
+                </button>
+                <button onclick="downloadJsonFile()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition cursor-pointer">
+                  Export JSON Backup
+                </button>
+                <label class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer">
+                  Import JSON
+                  <input type="file" accept=".json,application/json" onchange="handleJsonImport(event)" class="hidden" />
+                </label>
+                <button onclick="resetToSampleData()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 transition cursor-pointer">
+                  Reset Default
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Cloudflare Pages + D1 Setup Reference -->
+          <details class="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
+            <summary class="text-xs font-bold text-slate-800 cursor-pointer select-none">
+              Cloudflare Pages + D1 Setup Code (functions/api/data.js &amp; D1 SQL Table)
+            </summary>
+
+            <div class="pt-3 space-y-4">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-semibold text-slate-700">1. D1 Console SQL Query</span>
+                  <button type="button" onclick="copyCodeBlock('d1SqlCode', 'D1 SQL query')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-900 text-white hover:bg-slate-800 cursor-pointer">Copy SQL</button>
+                </div>
+                <pre id="d1SqlCode" class="text-[11px] leading-relaxed text-slate-700 overflow-x-auto p-3 bg-white rounded-lg border border-slate-200">${escapeHtml(sqlSchemaCode)}</pre>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-semibold text-slate-700">2. Cloudflare Pages Function: <code class="text-emerald-700">functions/api/data.js</code></span>
+                  <button type="button" onclick="copyCodeBlock('cfFunctionCode', 'functions/api/data.js')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer">Copy data.js</button>
+                </div>
+                <pre id="cfFunctionCode" class="text-[11px] leading-relaxed text-slate-700 overflow-x-auto max-h-72 p-3 bg-white rounded-lg border border-slate-200">${escapeHtml(backendFunctionCode)}</pre>
+              </div>
+            </div>
+          </details>
+        </div>
+      `;
+    }
+
+    /* =========================================================================
+       10. BOOTSTRAP APPLICATION ON LOAD
+       ========================================================================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      initializeDatabase();
+    });
+  </script>
+</body>
+</html>
